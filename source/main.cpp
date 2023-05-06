@@ -3,10 +3,12 @@
 #include <string>
 #include <vector>
 #include <string>
+#include <cstdio>
 #include <framework.h>
 
 int main()
 {
+    //c++ iostream is just rubbish
     std::ios::sync_with_stdio(false);
     std::cerr.tie(nullptr);
     std::cerr << std::nounitbuf;
@@ -16,10 +18,7 @@ int main()
 
     init_read();
 
-    /*
-        你可以在读入后进行一些相关预处理，时间限制：5秒钟
-        init();
-    */
+    init();
 
     int totalFrame = 14400;
     for (int i = 0; i < totalFrame; i++)
