@@ -8,7 +8,7 @@ namespace Map{
     T data[N_MAX * N_SCALE][M_MAX * M_SCALE];
     struct LocalLocation : public Location {
       Matrix *father;
-      LocalLocation(int _x=0, int _y=0, Matrix *_f=NULL) : Location(_x, _y), father(_f) {}
+      LocalLocation(int _x=0, int _y=0, const Matrix *_f=NULL) : Location(_x, _y), father(_f) {}
       LocalLocation(Location location) : Location(location) {} 
       LocalLocation operator ++(int) {
         if (y < m * M_SCALE) {
