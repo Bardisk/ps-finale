@@ -8,7 +8,6 @@ int main()
     std::cerr << std::nounitbuf;
     std::string s;
     std::stringstream ss;
-    int frame;
 
     init_read();
 

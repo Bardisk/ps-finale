@@ -15,9 +15,9 @@ struct Location {
   Location operator ++(int) {
     if (y < Map::m) {
       //newline
-      y++; x = 0;
+      y++;
     }
-    else x++;
+    else {x++; y=0;}
     return *this;
   }
   friend std::istream& operator>> (std::istream &is, Location &location) {

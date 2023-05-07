@@ -11,19 +11,13 @@ namespace Map{
       LocalLocation(int _x=0, int _y=0, Matrix *_f=NULL) : Location(_x, _y), father(_f) {}
       LocalLocation(Location location) : Location(location) {} 
       LocalLocation operator ++(int) {
-        if (y < m * M_SCALE) {
-          y++;
-          x=0;
-        }
-        else x++;
+        if (y < m * M_SCALE) y++;
+        else x++, y=0;
         return *this;
       }
       LocalLocation& operator ++() {
-        if (y < m * M_SCALE) {
-          y++;
-          x=0;
-        }
-        else x++;
+        if (y < m * M_SCALE) y++;
+        else x++, y=0;
         return *this;
       }
       T& operator *() const { return (*father)[(*this)]; }
@@ -32,7 +26,10 @@ namespace Map{
       }
     };
     T& operator [](LocalLocation localLocation) {
-      assert(localLocation.isvalid());
+      if (!localLocation.isvalid()){
+        Log("now loc: %d %d", localLocation.x, localLocation.y);
+        assert(0);
+      }
       return data[localLocation.x][localLocation.y];
     }
     friend std::istream& operator>> (std::istream &is, LocalLocation &localLocation) {

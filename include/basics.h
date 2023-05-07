@@ -22,6 +22,9 @@
 #define ENTTY_NR_MAX 20
 
 inline void Log(const char *fmt, ...) {
+#ifdef NDEBUG
+  return ;
+#endif
   char buf[1024];
   va_list arglist;
   va_start(arglist, fmt);
