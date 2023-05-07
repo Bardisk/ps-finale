@@ -110,6 +110,12 @@ namespace Tile {
         return 'k';
       case TileKind::PlateRack:
         return 'r';
+      case TileKind::Floor:
+        return '.';
+      case TileKind::Void:
+        return '_';
+      case TileKind::Table:
+        return '*';
       default:
         assert(0);
     }

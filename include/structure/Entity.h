@@ -4,7 +4,7 @@
 
 struct Entity
 {
-  Position position;
+  Location location;
   Container::ContainerKind containerKind;
   //to-do change to integer
   std::vector<std::string> entityList;

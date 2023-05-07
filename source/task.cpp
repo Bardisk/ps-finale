@@ -5,7 +5,8 @@ namespace Mainctr {
   Direction::DirectionKind direction_p1 = Direction::N, direction_p2 = Direction::N;
   StateType state_p1 = NONE, state_p2 = NONE;
   Location target_p1, target_p2;
-
+  StateType nxtstate_p1 = NONE, nxtstate_p2 = NONE;
+  bool firstplate = true;
   int timeout_p1=0, timeout_p2=0;
 
   void getDecision() {
@@ -17,20 +18,128 @@ namespace Mainctr {
     Path::abilityMap[loc2] = false;
     Log("Last direction : %s", Direction::encode(direction_p1).c_str());
     Log("Now velocity %.2lf", Game::playrList[0].velocity.abs());
+
+    Location plateLocation;
+    Direction::DirectionKind plateDirection;
+    
     switch (state_p1)
     {
     case NONE:
-      state_p1 = MOVE;
-      target_p1 = Location(1, 1);
+      state_p1 = FETCH_IND;
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
       break;
+    case FETCH_IND:
+      if (loc1 == Game::indDestination) {
+        state_p1 = FILL_PLATE;
+        command_p1 = Command::Access;
+        direction_p1 = Game::indDirection;
+      }
+      else {
+        state_p1 = MOVE;
+        target_p1 = Game::indDestination;
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        nxtstate_p1 = FETCH_IND;
+      }
+      break;
+    case FILL_PLATE:
+      if (firstplate) {
+        plateLocation = Game::plateDestination;
+        plateDirection = Game::plateDirection;
+      }
+      else {
+        plateLocation = Game::cleanDestination;
+        plateDirection = Game::cleanDirection;
+      }
+      if (loc1 == plateLocation) {
+        state_p1 = FETCH_PLATE;
+        command_p1 = Command::Access;
+        direction_p1 = plateDirection;
+      }
+      else {
+        state_p1 = MOVE;
+        target_p1 = plateLocation;
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        nxtstate_p1 = FILL_PLATE;
+      }
+      break;
+    case FETCH_PLATE:
+      Log("FETCHING PLATE");
+      if (firstplate) {
+        firstplate = false;
+        plateLocation = Game::plateDestination;
+        plateDirection = Game::plateDirection;
+      }
+      else {
+        plateLocation = Game::cleanDestination;
+        plateDirection = Game::cleanDirection;
+      }
+      state_p1 = SURVE;
+      command_p1 = Command::Access;
+      direction_p1 = plateDirection;
+      break;
+    case SURVE:
+      Log("IM SURVING");
+      if (loc1 == Game::surveDestination) {
+        state_p1 = WAIT;
+        timeout_p1 = 300;
+        nxtstate_p1 = FETCH_DIRTY;
+        command_p1 = Command::Access;
+        direction_p1 = Game::surveDirection;
+      }
+      else {
+        state_p1 = MOVE;
+        target_p1 = Game::surveDestination;
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        nxtstate_p1 = SURVE;
+      }
+      break;
+    case FETCH_DIRTY:
+      if (loc1 == Game::dirtyDestination) {
+        state_p1 = GO_WASH;
+        command_p1 = Command::Access;
+        direction_p1 = Game::dirtyDirection;
+      }
+      else {
+        state_p1 = MOVE;
+        target_p1 = Game::dirtyDestination;
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        nxtstate_p1 = FETCH_DIRTY;
+      }
+      break;
+    case GO_WASH:
+      if (loc1 == Game::washDestination) {
+        Log("GET SINK");
+        state_p1 = WASH_PLATE;
+        command_p1 = Command::Access;
+        direction_p1 = Game::washDirection;
+      }
+      else {
+        state_p1 = MOVE;
+        target_p1 = Game::washDestination;
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        nxtstate_p1 = GO_WASH;
+      }
+      break;
+    case WASH_PLATE:
+      state_p1 = WAIT;
+      timeout_p1 = 300;
+      nxtstate_p1 = FETCH_IND;
+      command_p1 = Command::Operate;
+      direction_p1 = Game::washDirection;
+      break;
     case MOVE:
+      Log("MOVING to target (%d, %d)", target_p1.x, target_p1.y);
       //on arrival
       if (loc1 == target_p1) {
         if (Game::playrList[0].velocity.abs() < eps)
           direction = Direction::N;
-        else state_p1 = NONE;
+        else state_p1 = nxtstate_p1;
         break;
       }
 
@@ -45,15 +154,15 @@ namespace Mainctr {
       else direction_p1 = direction;
       break;
 
-    case ACCESS_WAIT:
+    case WAIT:
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
       if (!(--timeout_p1)) {
-        state_p1 = NONE;
+        state_p1 = nxtstate_p1;
       }
       break;
-    case ACCESS_CHECK:
-      state_p1 = ACCESS_WAIT;
+    case CHECK:
+      state_p1 = WAIT;
       break;
     default:
       break;

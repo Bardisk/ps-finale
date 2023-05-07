@@ -21,7 +21,8 @@ namespace Game{
 
     Location ingrdDestination[INGRD_NR_MAX];
     Direction::DirectionKind ingrdDirection[INGRD_NR_MAX];
-    Location washDestination, washplateDestination, surveDestination, dirtyDestination;
+    Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
+    Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
 }
 
 void init_read()
@@ -48,32 +49,29 @@ void init_read()
             Path::abilityMap[location] = false;
             break;
         }
+    }
+    for (auto location : Map::tileMap) {
         if (Map::tileMap[location] == Tile::Floor) {
             for (int i = 0; i < Direction::Direction_NR; i++) {
                 Direction::DirectionKind direction = (Direction::DirectionKind) i;
                 if (Direction::encode(direction).size() > 1)
                     continue;
-
+                Location to = location[direction];
+                if (!to.isvalid()) continue;
+                if (Map::tileMap[to] == Tile::PlateReturn) Game::dirtyDestination = location, Game::dirtyDirection = direction;
+                if (Map::tileMap[to] == Tile::PlateRack) Game::cleanDestination = location, Game::cleanDirection = direction;
+                if (Map::tileMap[to] == Tile::Sink) Game::washDestination = location, Game::washDirection = direction;
+                if (location == Location(4, 8)) {
+                    Log("IN (4, 8)");
+                    Log("%d\n", (int) Map::tileMap[to]);
+                    Log("%c\n", Tile::encode(Map::tileMap[to]));
+                }
+                if (Map::tileMap[to] == Tile::ServiceWindow) Game::surveDestination = location, Game::surveDirection = direction;
             }
         }
     }
 
-// Direction::Direction_NR; i++) {
-//         Direction::DirectionKind direction = (Direction::DirectionKind) i;
-//         //only go straight
-//         
-//           continue;
-//         Location to = now[direction];
-//         if (abilityMap[to] && !visMap[to]) {
-//           fromDirection[to] = direction;
-//           fromPoint[to] = now;
-//           visMap[to] = true;
-//           if (to == dst)
-//             goto end;
-//           q.push(to);
-//           toClear.push(to);
-//         }
-//       }
+    Log("SERVE AT (%d, %d)", Game::surveDestination.x, Game::surveDestination.y);
 
     /* 读入原料箱：位置、名字、以及采购单价 */
     ss >> Game::ingrdCnt;
@@ -81,6 +79,17 @@ void init_read()
         ss >> s;
         assert(s == "IngredientBox");
         ss >> Game::ingrdList[i];
+        for (int j = 0; j < Direction::Direction_NR; j++) {
+            Direction::DirectionKind direction = (Direction::DirectionKind) j;
+            if (Direction::encode(direction).size() > 1)
+                continue;
+            Location to = Game::ingrdList[i].location[direction];
+            if (!to.isvalid()) continue;
+            if (Map::tileMap[to] == Tile::Floor) {
+                Game::ingrdDestination[i] = to;
+                Game::ingrdDirection[i] = Direction::getrev(direction);
+            }
+        }
     }
 
     /* 读入配方：加工时间、加工前的字符串表示、加工容器、加工后的字符串表示 */
@@ -94,6 +103,13 @@ void init_read()
     /* 读入订单的有效帧数、价格、权重、订单组成 */
     for (int i = 0; i < Game::totodCnt; i++)
         ss >> Game::totodList[i];
+    
+    for (int i = 0; i < Game::ingrdCnt; i++) {
+        if (Game::ingrdList[i].name == Game::totodList[0].requirement[0]) {
+            Game::indDestination = Game::ingrdDestination[i];
+            Game::indDirection = Game::ingrdDirection[i]; 
+        }
+    }
 
     /* 读入玩家信息：初始坐标 */
     ss >> Game::playrCnt;
@@ -107,8 +123,21 @@ void init_read()
     /* 读入实体信息：坐标、实体组成 */
     ss >> Game::enttyCnt;
     for (int i = 0; i < Game::enttyCnt; i++) {
-        ss >> Game::enttyList[i].position;
+        ss >> Game::enttyList[i].location;
         ss >> Game::enttyList[i];
+        if (Game::enttyList[i].containerKind == Container::Plate) {
+            for (int j = 0; j < Direction::Direction_NR; j++) {
+                Direction::DirectionKind direction = (Direction::DirectionKind) j;
+                if (Direction::encode(direction).size() > 1)
+                    continue;
+                Location to = Game::enttyList[i].location[direction];
+                if (!to.isvalid()) continue;
+                if (Map::tileMap[to] == Tile::Floor) {
+                    Game::plateDirection = Direction::getrev(direction);
+                    Game::plateDestination = to;
+                }
+            }
+        }
     }
 }
 
@@ -149,7 +178,7 @@ bool frame_read(int nowFrame)
 
     ss >> Game::enttyCnt;
     for (int i = 0; i < Game::enttyCnt; i++) {
-        ss >> Game::enttyList[i].position;
+        ss >> Game::enttyList[i].location;
         ss >> Game::enttyList[i];
     }
     return false;

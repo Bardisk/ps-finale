@@ -22,6 +22,10 @@ namespace Game{
   extern Entity enttyList[];
   extern int ingrdCnt, recipCnt, orderCnt, enttyCnt, playrCnt, totodCnt;
   
+  extern Location ingrdDestination[INGRD_NR_MAX];
+  extern Direction::DirectionKind ingrdDirection[INGRD_NR_MAX];
+  extern Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
+  extern Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
 }
 
 #endif
