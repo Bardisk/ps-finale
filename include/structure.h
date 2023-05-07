@@ -3,11 +3,11 @@
 
 #include <basics.h>
 
-#include "structure/Ingredient.h"
-#include "structure/Order.h"
-#include "structure/Entity.h"
-#include "structure/Recipe.h"
-#include "structure/Player.h"
+#include <structure/Ingredient.h>
+#include <structure/Order.h>
+#include <structure/Entity.h>
+#include <structure/Recipe.h>
+#include <structure/Player.h>
 
 namespace Game{
   extern int totTime;
