@@ -26,6 +26,7 @@ struct Position
   }
   friend std::istream& operator>> (std::istream &is, Position &position) {
     is >> position.y >> position.x;
+    return is;
   }
   bool isvalid() const {
     return x >= 0 && x < Map::n && y >= 0 && y < Map::m;

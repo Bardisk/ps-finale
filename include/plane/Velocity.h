@@ -11,6 +11,7 @@ struct Velocity
   }
   friend std::istream& operator>> (std::istream &is, Velocity &velocity) {
     is >> velocity.y >> velocity.x;
+    return is;
   }
 };
 #endif

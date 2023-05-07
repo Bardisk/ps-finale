@@ -38,6 +38,7 @@ namespace Cooker {
       return Pan;
     if (cookerName == "-pot->")
       return Pot;
+    assert(0);
   }
 }
 

@@ -17,6 +17,7 @@ struct Order
     while (tmp >> s) {
       order.requirement.push_back(s);
     }
+    return is;
   }
 };
 #endif

@@ -17,6 +17,7 @@ struct Player
       player.entity = entityTmp;
     }    
     else player.entity = std::nullopt;
+    return is;
   }
 };
 #endif

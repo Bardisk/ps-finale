@@ -22,6 +22,7 @@ struct Location {
   }
   friend std::istream& operator>> (std::istream &is, Location &location) {
     is >> location.y >> location.x;
+    return is;
   }
   operator Position() const {
     return Position(x + 0.5, y + 0.5);

@@ -10,6 +10,7 @@ struct Ingredient
   int type;
   friend std::istream& operator>> (std::istream &is, Ingredient &ingredient) {
     is >> ingredient.location >> ingredient.name >> ingredient.price;
+    return is;
   }
 };
 #endif

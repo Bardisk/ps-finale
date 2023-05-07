@@ -37,6 +37,7 @@ namespace Map{
     }
     friend std::istream& operator>> (std::istream &is, LocalLocation &localLocation) {
       is >> localLocation.y >> localLocation.x;
+      return is;
     }
 
     //stl_container-like

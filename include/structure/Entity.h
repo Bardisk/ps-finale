@@ -46,6 +46,7 @@ struct Entity
       }
       else entity.entityList.push_back(s);
     }
+    return is;
   }
 };
 
