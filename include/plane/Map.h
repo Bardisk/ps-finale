@@ -3,7 +3,6 @@
 #include <plane.h>
 
 namespace Map{
-  extern int n, m;
   template <typename T, int N_SCALE, int M_SCALE>
   struct Matrix {
     T data[N_MAX * N_SCALE][M_MAX * M_SCALE];
