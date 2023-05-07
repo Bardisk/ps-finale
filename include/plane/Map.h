@@ -26,7 +26,7 @@ namespace Map{
         else x++;
         return *this;
       }
-      T& operator *() const { return *father[(*this)]; }
+      T& operator *() const { LocalLocation tmp = (*this); return *father[tmp]; }
       bool isvalid() const {
         return x >= 0 && x < n * N_SCALE && y >= 0 && y < m * M_SCALE;
       }
