@@ -1,10 +1,4 @@
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <string>
-#include <cstdio>
-#include <framework.h>
+#include <basics.h>
 
 int main()
 {
@@ -18,24 +12,19 @@ int main()
 
     init_read();
 
-    init();
-
     int totalFrame = 14400;
-    for (int i = 0; i < totalFrame; i++)
-    {
+    for (int i = 0; i < totalFrame; i++) {
         bool skip = frame_read(i);
         if (skip) continue;
 
+        Mainctr::getDecision();
         /* 输出当前帧的操作，此处仅作示例 */
         std::cout << "Frame " << i << "\n";
-        std::string player0_Action = "Move R";
-        std::string player1_Action = "Move U";
 
-        /* 合成一个字符串再输出，否则输出有可能会被打断 */
-        std::string action = player0_Action + "\n" + player1_Action + "\n";
-        std::cout << action;
+        std::string response = Mainctr::respond();
+        std::cout << response;
 
-        /* 不要忘记刷新输出流，否则游戏将无法及时收到响应 */
+        // flush the output stream
         std::cout.flush();
     }
 }
