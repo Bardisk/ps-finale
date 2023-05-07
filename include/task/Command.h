@@ -7,6 +7,7 @@ namespace Command {
     Move,
     Operate,
     Access,
+    Invalid,
   };
   inline std::string encode (CommandType command) {
     switch (command)
@@ -21,6 +22,7 @@ namespace Command {
       assert(0);
     }
     assert(0);
+    return "FUK";
   }
 }
 #endif

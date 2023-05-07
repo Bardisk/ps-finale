@@ -14,6 +14,7 @@ struct Recipe
     is >> kindstr;
     recipe.kind = Cooker::decode(kindstr);
     is >> recipe.nameAfter;
+    return is;
   }
 };
 
