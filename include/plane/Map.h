@@ -9,7 +9,7 @@ namespace Map{
     struct LocalLocation : public Location {
       Matrix *father;
       LocalLocation(int _x=0, int _y=0, Matrix *_f=NULL) : Location(_x, _y), father(_f) {}
-      LocalLocation(Location location) : x(location.x), y(location.y) {} 
+      LocalLocation(Location location) : Location(location) {} 
       LocalLocation operator ++(int) {
         if (y < m * M_SCALE) {
           y++;

@@ -14,6 +14,7 @@ namespace Mainctr {
   std::string respond() {
     std::stringstream ss;
     ss << Command::encode(command_p1) << " " << Direction::encode(direction_p1) << '\n' << Command::encode(command_p2) << Direction::encode(direction_p2) << '\n';
+    return ss.str();
   }
 
   void getDecision() {
