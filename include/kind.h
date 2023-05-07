@@ -30,6 +30,7 @@ namespace Cooker {
     Chop,
     Pan,
     Pot,
+    None
   };
   inline CookerKind decode(std::string cookerName) {
     if (cookerName == "-chop->")
@@ -39,6 +40,7 @@ namespace Cooker {
     if (cookerName == "-pot->")
       return Pot;
     assert(0);
+    return None;
   }
 }
 
@@ -84,6 +86,8 @@ namespace Tile {
     default:
       assert(0);
     }
+    assert(0);
+    return TileKind::None;
   }
   inline char encode(TileKind kind) {
     switch (kind) {
@@ -106,6 +110,8 @@ namespace Tile {
       default:
         assert(0);
     }
+    assert(0);
+    return '\0';
   }
 }
 
