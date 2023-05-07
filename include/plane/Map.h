@@ -1,5 +1,5 @@
-#ifndef PLAYER
-#define PLAYER
+#ifndef MAP
+#define MAP
 #include <plane.h>
 
 namespace Map{
@@ -52,3 +52,4 @@ namespace Map{
   extern Matrix<char, 1, 1> charmap;
   extern Matrix<Tile::TileKind, 1, 1> tileMap;
 };
+#endif

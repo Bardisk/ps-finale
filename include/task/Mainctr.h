@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MAINCTR
+#define MAINCTR
 #include <task.h>
 
 namespace Mainctr {
@@ -22,3 +23,4 @@ namespace Mainctr {
     direction_p2 = Direction::N;
   }
 }
+#endif

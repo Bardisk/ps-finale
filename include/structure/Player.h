@@ -19,3 +19,4 @@ struct Player
     else player.entity = std::nullopt;
   }
 };
+#endif
