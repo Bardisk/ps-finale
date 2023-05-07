@@ -7,7 +7,8 @@ namespace Mainctr {
     MOVE,
     INTERACT,
     WAITFOR,
-  }state_p1, state_p2;
+  };
+  extern StateType state_p1, state_p2;
   
   extern Command::CommandType command_p1, command_p2;
   extern Direction::DirectionKind direction_p1, direction_p2;
