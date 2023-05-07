@@ -5,7 +5,7 @@
 namespace Direction {
   const int dx[] = { 1,  1,  1, -1, -1, -1,  0,  0,  0};
   const int dy[] = {-1,  1,  0, -1,  1,  0, -1,  1,  0};
-  const std::string directionName[] = {"LD", "RD", "D", "LU", "RU", "U", "L", "R", "N"};
+  const std::string directionName[] = {"LD", "RD", "D", "LU", "RU", "U", "L", "R", " "};
   enum DirectionKind {
     LD = 0,
     RD,

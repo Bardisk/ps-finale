@@ -26,6 +26,7 @@ struct Position
   }
   friend std::istream& operator>> (std::istream &is, Position &position) {
     is >> position.y >> position.x;
+    Log("position (%.2lf, %.2lf)", position.x, position.y);
     return is;
   }
   bool isvalid() const {

@@ -5,13 +5,15 @@
 namespace Mainctr {
   enum StateType{
     MOVE,
-    ACCESS_CHECK,
-    ACCESS_WAIT,
+    FETCH_IND,
+    FETCH_PLATE,
+    WASH_PLATE,
     NONE,
   };
   enum TargetType {
     Wash,
     Plate,
+    Fetch,
     Order,
   };
   extern StateType state_p1, state_p2;
@@ -20,7 +22,7 @@ namespace Mainctr {
   extern Direction::DirectionKind direction_p1, direction_p2;
   inline std::string respond() {
     std::stringstream ss;
-    ss << Command::encode(command_p1) << " " << Direction::encode(direction_p1) << '\n' << Command::encode(command_p2) << Direction::encode(direction_p2) << '\n';
+    ss << Command::encode(command_p1) << " " << Direction::encode(direction_p1) << '\n' << Command::encode(command_p2) << " " << Direction::encode(direction_p2) << '\n';
     return ss.str();
   }
 

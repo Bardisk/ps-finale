@@ -16,10 +16,12 @@ namespace Game{
   extern int currentFrame;
   extern Ingredient ingrdList[];
   extern Recipe recipList[];
-  extern Order totodList[], orderList[];
+  extern Order orderList[];
+  extern Ordertemplate totodList[];
   extern Player playrList[];
   extern Entity enttyList[];
   extern int ingrdCnt, recipCnt, orderCnt, enttyCnt, playrCnt, totodCnt;
+  
 }
 
 #endif

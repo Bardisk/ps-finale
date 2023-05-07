@@ -2,7 +2,7 @@
 
 namespace Mainctr {
   Command::CommandType command_p1, command_p2;
-  Direction::DirectionKind direction_p1, direction_p2;
+  Direction::DirectionKind direction_p1 = Direction::N, direction_p2 = Direction::N;
   StateType state_p1 = NONE, state_p2 = NONE;
   Location target_p1, target_p2;
 
@@ -23,6 +23,7 @@ namespace Mainctr {
       state_p1 = MOVE;
       target_p1 = Location(1, 1);
       command_p1 = Command::Move;
+      direction_p1 = Direction::N;
       break;
     case MOVE:
       //on arrival

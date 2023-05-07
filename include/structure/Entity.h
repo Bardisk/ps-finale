@@ -12,7 +12,6 @@ struct Entity
   int currentFrame, totalFrame, sum;
   bool crashed, overcooked;
   friend std::istream& operator >> (std::istream& is, Entity &entity) {
-    is >> entity.position;
     entity.processing = false;
     entity.containerKind = Container::None;
 

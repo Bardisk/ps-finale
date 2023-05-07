@@ -1,22 +1,27 @@
 #include <basics.h>
 
 namespace Map{
-  int n, m;
-  Matrix<char, 1, 1> charMap;
-  Matrix<Tile::TileKind, 1, 1> tileMap;
+    int n, m;
+    Matrix<char, 1, 1> charMap;
+    Matrix<Tile::TileKind, 1, 1> tileMap;
 };
 
 namespace Game{
-  int totTime;
-  int randomizeSeed;
-  int remainFrame, fund;
-  int currentFrame;
-  Ingredient ingrdList[INGRD_NR_MAX];
-  Recipe recipList[RECIP_NR_MAX];
-  Order totodList[TOTOD_NR_MAX], orderList[ORDER_NR_MAX];
-  Player playrList[PLAYR_NR_MAX];
-  Entity enttyList[ENTTY_NR_MAX];
-  int ingrdCnt, recipCnt, orderCnt, enttyCnt, playrCnt, totodCnt;
+    int totTime;
+    int randomizeSeed;
+    int remainFrame, fund;
+    int currentFrame;
+    Ingredient ingrdList[INGRD_NR_MAX];
+    Recipe recipList[RECIP_NR_MAX];
+    Ordertemplate totodList[TOTOD_NR_MAX];
+    Order orderList[ORDER_NR_MAX];
+    Player playrList[PLAYR_NR_MAX];
+    Entity enttyList[ENTTY_NR_MAX];
+    int ingrdCnt, recipCnt, orderCnt, enttyCnt, playrCnt, totodCnt;
+
+    Location ingrdDestination[INGRD_NR_MAX];
+    Direction::DirectionKind ingrdDirection[INGRD_NR_MAX];
+    Location washDestination, washplateDestination, surveDestination, dirtyDestination;
 }
 
 void init_read()
@@ -43,7 +48,32 @@ void init_read()
             Path::abilityMap[location] = false;
             break;
         }
+        if (Map::tileMap[location] == Tile::Floor) {
+            for (int i = 0; i < Direction::Direction_NR; i++) {
+                Direction::DirectionKind direction = (Direction::DirectionKind) i;
+                if (Direction::encode(direction).size() > 1)
+                    continue;
+
+            }
+        }
     }
+
+// Direction::Direction_NR; i++) {
+//         Direction::DirectionKind direction = (Direction::DirectionKind) i;
+//         //only go straight
+//         
+//           continue;
+//         Location to = now[direction];
+//         if (abilityMap[to] && !visMap[to]) {
+//           fromDirection[to] = direction;
+//           fromPoint[to] = now;
+//           visMap[to] = true;
+//           if (to == dst)
+//             goto end;
+//           q.push(to);
+//           toClear.push(to);
+//         }
+//       }
 
     /* 读入原料箱：位置、名字、以及采购单价 */
     ss >> Game::ingrdCnt;
@@ -77,9 +107,8 @@ void init_read()
     /* 读入实体信息：坐标、实体组成 */
     ss >> Game::enttyCnt;
     for (int i = 0; i < Game::enttyCnt; i++) {
-        ss >> Game::enttyList[i].position >> s;
-        Game::enttyList[i].containerKind = Container::decode(s);
-        Game::enttyList[i].sum = 1;
+        ss >> Game::enttyList[i].position;
+        ss >> Game::enttyList[i];
     }
 }
 
@@ -104,19 +133,24 @@ bool frame_read(int nowFrame)
     ss >> Game::currentFrame;
     assert(Game::currentFrame == nowFrame);
     ss >> Game::remainFrame >> Game::fund;
+    Log("frame remaining: %d", Game::remainFrame);
     /* 读入当前的订单剩余帧数、价格、以及配方 */
     ss >> Game::orderCnt;
-    for (int i = 0; i < Game::orderCnt; i++)
+    for (int i = 0; i < Game::orderCnt; i++) {
         ss >> Game::orderList[i];
+        Log("%s", Game::orderList[i].requirement[0].c_str());
+    }
     /* 读入玩家坐标、x方向速度、y方向速度、剩余复活时间 */
+    ss >> Game::playrCnt;
     for (int i = 0; i < Game::playrCnt; i++) {
         ss >> Game::playrList[i];
         Log("player (%.2lf %.2lf)", Game::playrList[i].position.x, Game::playrList[i].position.y);
     }
 
     ss >> Game::enttyCnt;
-    /* 读入实体坐标 */
-    for (int i = 0; i < Game::enttyCnt; i++)
+    for (int i = 0; i < Game::enttyCnt; i++) {
+        ss >> Game::enttyList[i].position;
         ss >> Game::enttyList[i];
+    }
     return false;
 }
