@@ -5,5 +5,6 @@
 
 #include "task/Command.h"
 #include "task/Mainctr.h"
+#include "task/Path.h"
 
 #endif

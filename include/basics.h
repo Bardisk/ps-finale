@@ -11,6 +11,9 @@
 #include <optional>
 #include <sstream>
 #include <cstdarg>
+#include <queue>
+#include <cstring>
+#include <cmath>
 
 #define N_MAX 25
 #define M_MAX 25
@@ -20,6 +23,8 @@
 #define ORDER_NR_MAX 25
 #define PLAYR_NR_MAX 2
 #define ENTTY_NR_MAX 20
+
+const double eps=1e-2;
 
 inline void Log(const char *fmt, ...) {
 #ifdef NDEBUG

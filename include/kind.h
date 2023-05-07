@@ -84,6 +84,9 @@ namespace Tile {
     case 'r':
       return TileKind::PlateRack;
     default:
+      if (kindChar >= 'A' && kindChar <= 'Z')
+        return TileKind::IngredientBox;
+      Log("getchar %c", kindChar);
       assert(0);
     }
     assert(0);

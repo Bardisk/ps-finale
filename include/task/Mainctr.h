@@ -5,8 +5,14 @@
 namespace Mainctr {
   enum StateType{
     MOVE,
-    INTERACT,
-    WAITFOR,
+    ACCESS_CHECK,
+    ACCESS_WAIT,
+    NONE,
+  };
+  enum TargetType {
+    Wash,
+    Plate,
+    Order,
   };
   extern StateType state_p1, state_p2;
   

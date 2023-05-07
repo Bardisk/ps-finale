@@ -6,6 +6,7 @@
 struct Location {
   int x, y;
   Location(int _x=0, int _y=0) : x(_x), y(_y) {}
+  Location(Position _p) : x(std::round(_p.x - 0.5)+eps), y(std::round(_p.y - 0.5)+eps) {}
   Location operator [] (Direction::DirectionKind direction) const {
     return Location(
       x + Direction::dx[direction],
@@ -13,8 +14,7 @@ struct Location {
     );
   }
   Location operator ++(int) {
-    if (y < Map::m) {
-      //newline
+    if (y < Map::m - 1) {
       y++;
     }
     else {x++; y=0;}

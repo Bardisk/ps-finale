@@ -29,10 +29,20 @@ void init_read()
 
     ss >> Map::m >> Map::n;
     Log("Get map N: %d M: %d", Map::n, Map::m);
-    for (auto tile : Map::tileMap) {
+    for (auto location : Map::tileMap) {
         char tilechar;
         ss >> tilechar;
-        tile = Tile::decode(tilechar);
+        Map::tileMap[location] = Tile::decode(tilechar);
+        assert(Map::tileMap[location] != Tile::None);
+        switch (Map::tileMap[location])
+        {
+        case Tile::Floor:
+            Path::abilityMap[location] = true;
+            break;
+        default:
+            Path::abilityMap[location] = false;
+            break;
+        }
     }
 
     /* 读入原料箱：位置、名字、以及采购单价 */
@@ -99,8 +109,10 @@ bool frame_read(int nowFrame)
     for (int i = 0; i < Game::orderCnt; i++)
         ss >> Game::orderList[i];
     /* 读入玩家坐标、x方向速度、y方向速度、剩余复活时间 */
-    for (int i = 0; i < Game::playrCnt; i++)
+    for (int i = 0; i < Game::playrCnt; i++) {
         ss >> Game::playrList[i];
+        Log("player (%.2lf %.2lf)", Game::playrList[i].position.x, Game::playrList[i].position.y);
+    }
 
     ss >> Game::enttyCnt;
     /* 读入实体坐标 */
