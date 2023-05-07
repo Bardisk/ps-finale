@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMMAND
+#define COMMAND
 #include <task.h>
 
 namespace Command {

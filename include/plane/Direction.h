@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DIRECTION
+#define DIRECTION
 #include <plane.h>
 
 namespace Direction {
@@ -40,3 +41,4 @@ namespace Direction {
     return directionName[direction];
   }
 }
+#endif

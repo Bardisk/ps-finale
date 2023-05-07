@@ -1,5 +1,6 @@
 //integer coordinators, for fixed object
-#pragma once
+#ifndef LOCATION
+#define LOCATION
 #include <plane.h>
 
 struct Location {
@@ -35,3 +36,4 @@ struct Location {
     return x >= 0 && x < Map::n && y >= 0 && y < Map::m;
   }
 };
+#endif

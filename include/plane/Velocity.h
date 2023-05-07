@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VELOCITY
+#define VELOCITY
 #include <plane.h>
 
 struct Velocity
@@ -12,3 +13,4 @@ struct Velocity
     is >> velocity.y >> velocity.x;
   }
 };
+#endif

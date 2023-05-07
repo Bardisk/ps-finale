@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLAYER
+#define PLAYER
 #include <structure.h>
 
 struct Player

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ORDER
+#define ORDER
 #include <structure.h>
 
 struct Order

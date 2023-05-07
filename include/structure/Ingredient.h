@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INGREDIENT
+#define INGREDIENT
 #include <structure.h>
 
 struct Ingredient
@@ -11,3 +12,4 @@ struct Ingredient
     is >> ingredient.location >> ingredient.name >> ingredient.price;
   }
 };
+#endif

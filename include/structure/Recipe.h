@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RECIPE
+#define RECIPE
 #include <structure.h>
 
 struct Recipe

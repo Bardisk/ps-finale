@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLAYER
+#define PLAYER
 #include <plane.h>
 
 namespace Map{

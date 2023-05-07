@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ENTITY
+#define ENTITY
 #include <structure.h>
 
 struct Entity
@@ -47,3 +48,5 @@ struct Entity
     }
   }
 };
+
+#endif

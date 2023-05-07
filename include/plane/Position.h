@@ -1,4 +1,5 @@
-#pragma once
+#ifndef POSITION
+#define POSITION
 #include <plane.h>
 
 struct Position
@@ -30,3 +31,4 @@ struct Position
     return x >= 0 && x < Map::n && y >= 0 && y < Map::m;
   }
 };
+#endif
