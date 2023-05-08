@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories("include")
 file(GLOB sources "source/*.cpp")
 add_library(Overcooked ${sources})
+target_link_libraries(Overcooked stdc++fs)
+target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
 
 add_custom_target(GitTraceAdd
         COMMAND "${GIT_EXECUTABLE}" add -A . --ignore-errors
@@ -16,7 +18,7 @@ add_custom_target(GitTraceCommit
         commit -q --allow-empty --no-verify -m "compile"
         --author="tracer-ps4 <tracer-ps4@nju.edu.cn>"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
+
 add_dependencies(GitTraceCommit GitTraceAdd) # Avoid data race
 add_dependencies(Overcooked GitTraceCommit)
 add_custom_command(TARGET Overcooked POST_BUILD
