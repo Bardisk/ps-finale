@@ -8,7 +8,7 @@ include_directories("include")
 file(GLOB sources "source/*.cpp")
 add_library(Overcooked ${sources})
 target_link_libraries(Overcooked stdc++fs)
-target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
+# target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
 
 add_custom_target(GitTraceAdd
         COMMAND "${GIT_EXECUTABLE}" add -A . --ignore-errors
