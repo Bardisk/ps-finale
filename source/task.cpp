@@ -17,6 +17,10 @@ namespace Mainctr {
   CommandType wait_nxt_command_p1 = Command::Move, wait_nxt_command_p2 = Command::Move;
   DirectionKind wait_nxt_direction_p1 = Direction::N, wait_nxt_direction_p2 = Direction::N;
 
+  std::string needed_p1;
+
+  Cooker::CookerKind firstCook, secondCook;
+  int firstTime, secondTime;
 
   bool firstplate = true;
   int timeout_p1=0, timeout_p2=0;
@@ -40,6 +44,8 @@ namespace Mainctr {
     Location plateLocation;
     DirectionKind plateDirection;
     
+    using Cooker::CookerKind;
+
     switch (state_p1)
     {
     case NONE:
@@ -57,10 +63,40 @@ namespace Mainctr {
       // else {
         state_p1 = MOVE;
 
-        target_p1 = Game::indDestination;
+        needed_p1 = Game::orderList[0].requirement[0];
+        if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
+          assert(Game::madeFrom.find(needed_p1) != Game::madeFrom.end());
+          if (Game::recipList[Game::madeFrom[needed_p1]].kind == Cooker::Chop) {
+            firstCook = Cooker::Chop;
+            firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+            Log("FIRSTTIME: %d", firstTime);
+            secondCook = Cooker::None;
+            needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
+          }
+          else {
+            firstCook = Cooker::None;
+            secondCook = Game::recipList[Game::madeFrom[needed_p1]].kind;
+            secondTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+            needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
+            if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
+              firstCook = Cooker::Chop;
+              firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+              Log("FIRSTTIME UNDER: %d", firstTime);
+              needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
+            }
+          }
+          // assert(0);
+        }
+        else {
+          firstCook = Cooker::None;
+          secondCook = Cooker::None;
+        }
+
+        assert(Game::ingrdPlace[needed_p1].size() > 0);
+        target_p1 = Game::ingrdDestination[Game::ingrdPlace[needed_p1][0]];
         nxt_command_p1 = Command::Access;
-        nxt_direction_p1 = Game::indDirection;
-        nxtstate_p1 = FILL_PLATE;
+        nxt_direction_p1 = Game::ingrdDirection[Game::ingrdPlace[needed_p1][0]];
+        nxtstate_p1 = firstCook == Cooker::None ? FILL_PLATE : CHOP;
 
         command_p1 = Command::Move;
         direction_p1 = Direction::N;
@@ -69,7 +105,32 @@ namespace Mainctr {
       break;
     
     case CHOP:
+      state_p1 = MOVE;
+      target_p1 = Game::chopDestination;
+      nxtstate_p1 = CHOPPING;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::chopDirection;
 
+      // timeout_p1 = 200;
+      // wait_nxt_command_p1 = Command::Move;
+      // wait_nxt_direction_p1 = Direction::N;
+
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+      break;
+
+    case CHOPPING:
+      state_p1 = WAIT;
+      timeout_p1 = firstTime;
+      Log("FIRSTTIME WITHIN: %d", firstTime);
+
+      nxtstate_p1 = FILL_PLATE;
+
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::chopDirection;
+
+      command_p1 = Command::Operate;
+      direction_p1 = Game::chopDirection;
       break;
 
     case FILL_PLATE:

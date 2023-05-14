@@ -24,7 +24,7 @@ namespace Game{
     Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
     Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
 
-    Location chopLocation, potLocation, panLocation;
+    Location chopDestination, potDestination, panDestination;
     Direction::DirectionKind chopDirection, potDirection, panDirection;
 
     std::optional<Cooker::CookerKind> needToCook = std::nullopt;
@@ -71,6 +71,7 @@ void init_read()
                 if (Map::tileMap[to] == Tile::PlateReturn) dirtyDestination = location, dirtyDirection = direction;
                 if (Map::tileMap[to] == Tile::PlateRack) cleanDestination = location, cleanDirection = direction;
                 if (Map::tileMap[to] == Tile::Sink) washDestination = location, washDirection = direction;
+                if (Map::tileMap[to] == Tile::ChoppingStation) chopDestination = location, chopDirection = direction;
                 if (location == Location(4, 8)) {
                     Log("IN (4, 8)");
                     Log("%d\n", (int) Map::tileMap[to]);
@@ -105,6 +106,8 @@ void init_read()
         }
     }
 
+    Log("END IRGBOX");
+
     /* 读入配方：加工时间、加工前的字符串表示、加工容器、加工后的字符串表示 */
     ss >> recipCnt;
     for (int i = 0; i < recipCnt; i++) {
@@ -116,6 +119,8 @@ void init_read()
         madeFor[recipList[i].nameBefore] = i;
     }
 
+    Log("END REP");
+
     /* 读入总帧数、当前采用的随机种子、一共可能出现的订单数量 */
     ss >> totTime >> randomizeSeed >> totodCnt;
 
@@ -123,30 +128,31 @@ void init_read()
     for (int i = 0; i < totodCnt; i++)
         ss >> totodList[i];
     
+    Log("TOTOD INIT");
     //will be neglected
-    for (int i = 0; i < ingrdCnt; i++) {
-        //no need to cook
-        if (ingrdList[i].name == totodList[0].requirement[0]) {
-            needToCook = Cooker::None;
-            indDestination = ingrdDestination[i];
-            indDirection = ingrdDirection[i]; 
-        }
-    }
-    if (!needToCook.has_value()) {
-        std::string targetName = totodList[1].requirement[0];
-        //should be able to be made from
-        assert(madeFrom.find(targetName) != madeFrom.end());
+    // for (int i = 0; i < ingrdCnt; i++) {
+    //     //no need to cook
+    //     if (ingrdList[i].name == totodList[0].requirement[0]) {
+    //         needToCook = Cooker::None;
+    //         indDestination = ingrdDestination[i];
+    //         indDirection = ingrdDirection[i]; 
+    //     }
+    // }
+    // if (!needToCook.has_value()) {
+    //     std::string targetName = totodList[1].requirement[0];
+    //     //should be able to be made from
+    //     assert(madeFrom.find(targetName) != madeFrom.end());
         
-        std::string prepareName = recipList[madeFrom[targetName]].nameBefore;
-        Log("Target Name: %s Prepare Name: %s", targetName.c_str(), prepareName.c_str());
-        needToCook = recipList[madeFrom[targetName]].kind;
+    //     std::string prepareName = recipList[madeFrom[targetName]].nameBefore;
+    //     Log("Target Name: %s Prepare Name: %s", targetName.c_str(), prepareName.c_str());
+    //     needToCook = recipList[madeFrom[targetName]].kind;
 
-        //should have at least an corresponding ingredient box
-        assert(ingrdPlace[prepareName].size() > 0);
-        //choose randomly (0)
-        indDestination = ingrdDestination[ingrdPlace[prepareName][0]];
-        indDirection = ingrdDirection[ingrdPlace[prepareName][0]];
-    }
+    //     //should have at least an corresponding ingredient box
+    //     assert(ingrdPlace[prepareName].size() > 0);
+    //     //choose randomly (0)
+    //     indDestination = ingrdDestination[ingrdPlace[prepareName][0]];
+    //     indDirection = ingrdDirection[ingrdPlace[prepareName][0]];
+    // }
 
     /* 读入玩家信息：初始坐标 */
     ss >> playrCnt;
@@ -156,6 +162,8 @@ void init_read()
         playrList[i].resume_time = 0;
         playrList[i].entity = std::nullopt;
     }
+
+    Log("END PL");
 
     /* 读入实体信息：坐标、实体组成 */
     ss >> enttyCnt;
@@ -175,7 +183,34 @@ void init_read()
                 }
             }
         }
+        if (enttyList[i].containerKind == Container::Pot) {
+            for (int j = 0; j < Direction::Direction_NR; j++) {
+                Direction::DirectionKind direction = (Direction::DirectionKind) j;
+                if (Direction::encode(direction).size() > 1)
+                    continue;
+                Location to = enttyList[i].location[direction];
+                if (!to.isvalid()) continue;
+                if (Map::tileMap[to] == Tile::Floor) {
+                    potDirection = Direction::getrev(direction);
+                    potDestination = to;
+                }
+            }
+        }
+        if (enttyList[i].containerKind == Container::Pan) {
+            for (int j = 0; j < Direction::Direction_NR; j++) {
+                Direction::DirectionKind direction = (Direction::DirectionKind) j;
+                if (Direction::encode(direction).size() > 1)
+                    continue;
+                Location to = enttyList[i].location[direction];
+                if (!to.isvalid()) continue;
+                if (Map::tileMap[to] == Tile::Floor) {
+                    panDirection = Direction::getrev(direction);
+                    panDestination = to;
+                }
+            }
+        }
     }
+    Log("END INIT");
 }
 
 bool frame_read(int nowFrame)

@@ -26,6 +26,11 @@ namespace Game{
   extern Direction::DirectionKind ingrdDirection[INGRD_NR_MAX];
   extern Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
   extern Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
+  extern std::unordered_map<std::string, int> madeFrom, madeFor;
+  extern std::unordered_set<std::string> items;
+  extern std::unordered_map<std::string, std::vector<int>> ingrdPlace;
+  extern Location chopDestination, potDestination, panDestination;
+  extern Direction::DirectionKind chopDirection, potDirection, panDirection;
 }
 
 #endif

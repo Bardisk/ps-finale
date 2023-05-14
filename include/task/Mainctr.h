@@ -10,6 +10,7 @@ namespace Mainctr {
     STOP,
     FETCH_IND,
     CHOP,
+    CHOPPING,
     FILL_PLATE,
     FETCH_PLATE,
     FETCH_DIRTY,
