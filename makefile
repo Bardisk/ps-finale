@@ -10,6 +10,8 @@ build:
 		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=false; fi
 	@make -C build
 
+.PHONY: build
+
 all:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
