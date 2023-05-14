@@ -7,7 +7,7 @@ export CXX=/mingw64/bin/g++.exe
 build:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
-		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=false; fi
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=FALSE; fi
 	@make -C build
 
 .PHONY: build
@@ -15,7 +15,7 @@ build:
 all:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
-		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=true; fi
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=TRUE; fi
 	@make -C build
 
 clean:
