@@ -219,14 +219,13 @@ namespace Mainctr {
       direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
 
       state_p1 = WAIT;
-      timeout_p1 = firstTime;
+      timeout_p1 = secondTime;
       nxt_command_p1 = Command::Access;
       nxt_direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
 
       nxtstate_p1 = SURVE;
-
       break;
-      
+
     case SURVE:
       state_p1 = MOVE;
       target_p1 = Game::surveDestination;
