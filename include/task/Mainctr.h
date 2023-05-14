@@ -21,6 +21,8 @@ namespace Mainctr {
     WASH_PLATE,
     WAIT,
     CHECK,
+    COOK,
+    COOKING,
     NONE,
   };
   enum TargetType {

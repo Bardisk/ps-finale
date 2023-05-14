@@ -173,10 +173,25 @@ namespace Mainctr {
       }
       state_p1 = MOVE;
 
-      target_p1 = Game::surveDestination;
-      nxt_command_p1 = Command::Access;
-      nxt_direction_p1 = Game::surveDirection;
-      nxtstate_p1 = FETCH_DIRTY;
+      if (secondCook == Cooker::None) {
+        target_p1 = Game::surveDestination;
+        nxt_command_p1 = Command::Access;
+        nxt_direction_p1 = Game::surveDirection;
+        nxtstate_p1 = FETCH_DIRTY;
+      }
+      else {
+        if (secondCook == Cooker::Pan) {
+          target_p1 = Game::panDestination;
+          nxt_command_p1 = Command::Access;
+          nxt_direction_p1 = Game::panDirection;
+          nxtstate_p1 = COOK;
+        } else {
+          target_p1 = Game::potDestination;
+          nxt_command_p1 = Command::Access;
+          nxt_direction_p1 = Game::potDirection;
+          nxtstate_p1 = COOK;
+        }
+      }
 
       command_p1 = Command::Access;
       direction_p1 = plateDirection;
@@ -198,7 +213,30 @@ namespace Mainctr {
     //     direction_p1 = Direction::N;
     //   // }
     //   break;
-    
+
+    case COOK:
+      command_p1 = Command::Operate;
+      direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
+
+      state_p1 = WAIT;
+      timeout_p1 = firstTime;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
+
+      nxtstate_p1 = SURVE;
+
+      break;
+      
+    case SURVE:
+      state_p1 = MOVE;
+      target_p1 = Game::surveDestination;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::surveDirection;
+      nxtstate_p1 = FETCH_DIRTY;
+
+      command_p1 = Command::Access;
+      direction_p1 = plateDirection;
+      break;
     case FETCH_DIRTY:
       state_p1 = MOVE;
 
