@@ -11,6 +11,7 @@ add_library(Overcooked ${sources})
 target_link_libraries(Overcooked stdc++fs)
 # target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
 
+if (ADD_TRACE)
 add_custom_target(GitTraceAdd
         COMMAND "${GIT_EXECUTABLE}" add -A . --ignore-errors
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
@@ -19,9 +20,7 @@ add_custom_target(GitTraceCommit
         commit -q --allow-empty --no-verify -m "compile"
         --author="tracer-ps4 <tracer-ps4@nju.edu.cn>"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
-
-if (ADD_TRACE)
-        add_dependencies(GitTraceCommit GitTraceAdd) # Avoid data race
+add_dependencies(GitTraceCommit GitTraceAdd) # Avoid data race
 endif()
 
 
