@@ -55,53 +55,46 @@ namespace Mainctr {
       break;
     
     case FETCH_IND:
-      // if (loc1 == Game::indDestination) {
-      //   state_p1 = FILL_PLATE;
-      //   command_p1 = Command::Access;
-      //   direction_p1 = Game::indDirection;
-      // }
-      // else {
-        state_p1 = MOVE;
+      state_p1 = MOVE;
 
-        needed_p1 = Game::orderList[0].requirement[0];
-        if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
-          assert(Game::madeFrom.find(needed_p1) != Game::madeFrom.end());
-          if (Game::recipList[Game::madeFrom[needed_p1]].kind == Cooker::Chop) {
-            firstCook = Cooker::Chop;
-            firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
-            Log("FIRSTTIME: %d", firstTime);
-            secondCook = Cooker::None;
-            needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
-          }
-          else {
-            firstCook = Cooker::None;
-            secondCook = Game::recipList[Game::madeFrom[needed_p1]].kind;
-            secondTime = Game::recipList[Game::madeFrom[needed_p1]].time;
-            needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
-            if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
-              firstCook = Cooker::Chop;
-              firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
-              Log("FIRSTTIME UNDER: %d", firstTime);
-              needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
-            }
-          }
-          // assert(0);
+      needed_p1 = Game::orderList[0].requirement[0];
+      if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
+        assert(Game::madeFrom.find(needed_p1) != Game::madeFrom.end());
+        if (Game::recipList[Game::madeFrom[needed_p1]].kind == Cooker::Chop) {
+          firstCook = Cooker::Chop;
+          firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+          Log("FIRSTTIME: %d", firstTime);
+          secondCook = Cooker::None;
+          needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
         }
         else {
           firstCook = Cooker::None;
-          secondCook = Cooker::None;
+          secondCook = Game::recipList[Game::madeFrom[needed_p1]].kind;
+          secondTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+          needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
+          if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
+            firstCook = Cooker::Chop;
+            firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+            Log("FIRSTTIME UNDER: %d", firstTime);
+            needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
+          }
         }
+        // assert(0);
+      }
+      else {
+        firstCook = Cooker::None;
+        secondCook = Cooker::None;
+      }
 
-        assert(Game::ingrdPlace[needed_p1].size() > 0);
-        target_p1 = Game::ingrdDestination[Game::ingrdPlace[needed_p1][0]];
-        nxt_command_p1 = Command::Access;
-        nxt_direction_p1 = Game::ingrdDirection[Game::ingrdPlace[needed_p1][0]];
-        nxtstate_p1 = firstCook == Cooker::None ? FILL_PLATE : CHOP;
+      assert(Game::ingrdPlace[needed_p1].size() > 0);
+      target_p1 = Game::ingrdDestination[Game::ingrdPlace[needed_p1][0]];
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::ingrdDirection[Game::ingrdPlace[needed_p1][0]];
+      nxtstate_p1 = firstCook == Cooker::None ? FILL_PLATE : CHOP;
 
-        command_p1 = Command::Move;
-        direction_p1 = Direction::N;
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
         
-      // }
       break;
     
     case CHOP:
@@ -110,10 +103,6 @@ namespace Mainctr {
       nxtstate_p1 = CHOPPING;
       nxt_command_p1 = Command::Access;
       nxt_direction_p1 = Game::chopDirection;
-
-      // timeout_p1 = 200;
-      // wait_nxt_command_p1 = Command::Move;
-      // wait_nxt_direction_p1 = Direction::N;
 
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
@@ -142,22 +131,17 @@ namespace Mainctr {
         plateLocation = Game::cleanDestination;
         plateDirection = Game::cleanDirection;
       }
-      // if (loc1 == plateLocation) {
-      //   state_p1 = FETCH_PLATE;
-      //   command_p1 = Command::Access;
-      //   direction_p1 = plateDirection;
-      // }
-      // else {
-        state_p1 = MOVE;
 
-        target_p1 = plateLocation;
-        nxt_command_p1 = Command::Access;
-        nxt_direction_p1 = plateDirection;
-        nxtstate_p1 = FETCH_PLATE;
-        
-        command_p1 = Command::Move;
-        direction_p1 = Direction::N;
-      // }
+      state_p1 = MOVE;
+
+      target_p1 = plateLocation;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = plateDirection;
+      nxtstate_p1 = FETCH_PLATE;
+      
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+
       break;
     
     case FETCH_PLATE:
@@ -197,23 +181,6 @@ namespace Mainctr {
       direction_p1 = plateDirection;
       break;
     
-    // case SURVE:
-    //   Log("IM SURVING");
-    //   // if (loc1 == Game::surveDestination) {
-    //   //   state_p1 = WAIT;
-    //   //   timeout_p1 = 300;
-    //   //   nxtstate_p1 = FETCH_DIRTY;
-    //   //   command_p1 = Command::Access;
-    //   //   direction_p1 = Game::surveDirection;
-    //   // }
-    //   // else {
-    //     state_p1 = MOVE;
-
-    //     command_p1 = Command::Move;
-    //     direction_p1 = Direction::N;
-    //   // }
-    //   break;
-
     case COOK:
       command_p1 = Command::Operate;
       direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
@@ -266,19 +233,7 @@ namespace Mainctr {
 
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
-      // if (loc1 == Game::washDestination) {
-      //   Log("GET SINK");
-      //   state_p1 = WASH_PLATE;
-      //   command_p1 = Command::Access;
-      //   direction_p1 = Game::washDirection;
-      // }
-      // else {
-      //   state_p1 = MOVE;
-      //   target_p1 = Game::washDestination;
-      //   command_p1 = Command::Move;
-      //   direction_p1 = Direction::N;
-      //   nxtstate_p1 = GO_WASH;
-      // }
+
       break;
     
     case WASH_PLATE:
