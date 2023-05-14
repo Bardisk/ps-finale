@@ -10,11 +10,17 @@ namespace Mainctr {
   Location target_p1, target_p2;
 
   StateType nxtstate_p1 = NONE, nxtstate_p2 = NONE;
-  CommandType nxt_command_p1, nxt_command_p2;
-  DirectionKind nxt_direction_p1, nxt_direction_p2;
+  
+  CommandType nxt_command_p1 = Command::Move, nxt_command_p2 = Command::Move;
+  DirectionKind nxt_direction_p1 = Direction::N, nxt_direction_p2 = Direction::N;
+
+  CommandType wait_nxt_command_p1 = Command::Move, wait_nxt_command_p2 = Command::Move;
+  DirectionKind wait_nxt_direction_p1 = Direction::N, wait_nxt_direction_p2 = Direction::N;
+
 
   bool firstplate = true;
   int timeout_p1=0, timeout_p2=0;
+  // int nxt_timeout_p1=0, nxt_timeout_p2=0;
 
   void getDecision() {
     DirectionKind direction;
@@ -50,12 +56,15 @@ namespace Mainctr {
       // }
       // else {
         state_p1 = MOVE;
+
         target_p1 = Game::indDestination;
+        nxt_command_p1 = Command::Access;
+        nxt_direction_p1 = Game::indDirection;
+        nxtstate_p1 = FILL_PLATE;
+
         command_p1 = Command::Move;
         direction_p1 = Direction::N;
-        nxtstate_p1 = ;
-        nxt_command_p1 = Command::Access;
-
+        
       // }
       break;
     
@@ -72,18 +81,22 @@ namespace Mainctr {
         plateLocation = Game::cleanDestination;
         plateDirection = Game::cleanDirection;
       }
-      if (loc1 == plateLocation) {
-        state_p1 = FETCH_PLATE;
-        command_p1 = Command::Access;
-        direction_p1 = plateDirection;
-      }
-      else {
+      // if (loc1 == plateLocation) {
+      //   state_p1 = FETCH_PLATE;
+      //   command_p1 = Command::Access;
+      //   direction_p1 = plateDirection;
+      // }
+      // else {
         state_p1 = MOVE;
+
         target_p1 = plateLocation;
+        nxt_command_p1 = Command::Access;
+        nxt_direction_p1 = plateDirection;
+        nxtstate_p1 = FETCH_PLATE;
+        
         command_p1 = Command::Move;
         direction_p1 = Direction::N;
-        nxtstate_p1 = FILL_PLATE;
-      }
+      // }
       break;
     
     case FETCH_PLATE:
@@ -97,95 +110,138 @@ namespace Mainctr {
         plateLocation = Game::cleanDestination;
         plateDirection = Game::cleanDirection;
       }
-      state_p1 = SURVE;
+      state_p1 = MOVE;
+
+      target_p1 = Game::surveDestination;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::surveDirection;
+      nxtstate_p1 = FETCH_DIRTY;
+
       command_p1 = Command::Access;
       direction_p1 = plateDirection;
       break;
     
-    case SURVE:
-      Log("IM SURVING");
-      if (loc1 == Game::surveDestination) {
-        state_p1 = WAIT;
-        timeout_p1 = 300;
-        nxtstate_p1 = FETCH_DIRTY;
-        command_p1 = Command::Access;
-        direction_p1 = Game::surveDirection;
-      }
-      else {
-        state_p1 = MOVE;
-        target_p1 = Game::surveDestination;
-        command_p1 = Command::Move;
-        direction_p1 = Direction::N;
-        nxtstate_p1 = SURVE;
-      }
-      break;
+    // case SURVE:
+    //   Log("IM SURVING");
+    //   // if (loc1 == Game::surveDestination) {
+    //   //   state_p1 = WAIT;
+    //   //   timeout_p1 = 300;
+    //   //   nxtstate_p1 = FETCH_DIRTY;
+    //   //   command_p1 = Command::Access;
+    //   //   direction_p1 = Game::surveDirection;
+    //   // }
+    //   // else {
+    //     state_p1 = MOVE;
+
+    //     command_p1 = Command::Move;
+    //     direction_p1 = Direction::N;
+    //   // }
+    //   break;
     
     case FETCH_DIRTY:
-      if (loc1 == Game::dirtyDestination) {
-        state_p1 = GO_WASH;
-        command_p1 = Command::Access;
-        direction_p1 = Game::dirtyDirection;
-      }
-      else {
-        state_p1 = MOVE;
-        target_p1 = Game::dirtyDestination;
-        command_p1 = Command::Move;
-        direction_p1 = Direction::N;
-        nxtstate_p1 = FETCH_DIRTY;
-      }
+      state_p1 = MOVE;
+
+      target_p1 = Game::dirtyDestination;
+      nxtstate_p1 = GO_WASH;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::dirtyDirection;
+
+      timeout_p1 = 300;
+      wait_nxt_command_p1 = Command::Access;
+      wait_nxt_direction_p1 = Game::dirtyDirection;
+
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
       break;
-    
+
     case GO_WASH:
-      if (loc1 == Game::washDestination) {
-        Log("GET SINK");
-        state_p1 = WASH_PLATE;
-        command_p1 = Command::Access;
-        direction_p1 = Game::washDirection;
-      }
-      else {
-        state_p1 = MOVE;
-        target_p1 = Game::washDestination;
-        command_p1 = Command::Move;
-        direction_p1 = Direction::N;
-        nxtstate_p1 = GO_WASH;
-      }
+      state_p1 = MOVE;
+
+      target_p1 = Game::washDestination;
+      nxtstate_p1 = WASH_PLATE;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::washDirection;
+
+      // timeout_p1 = 200;
+      // wait_nxt_command_p1 = Command::Move;
+      // wait_nxt_direction_p1 = Direction::N;
+
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+      // if (loc1 == Game::washDestination) {
+      //   Log("GET SINK");
+      //   state_p1 = WASH_PLATE;
+      //   command_p1 = Command::Access;
+      //   direction_p1 = Game::washDirection;
+      // }
+      // else {
+      //   state_p1 = MOVE;
+      //   target_p1 = Game::washDestination;
+      //   command_p1 = Command::Move;
+      //   direction_p1 = Direction::N;
+      //   nxtstate_p1 = GO_WASH;
+      // }
       break;
     
     case WASH_PLATE:
       state_p1 = WAIT;
-      timeout_p1 = 300;
+      timeout_p1 = 200;
+
       nxtstate_p1 = FETCH_IND;
+
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Direction::N;
+
       command_p1 = Command::Operate;
       direction_p1 = Game::washDirection;
+      
       break;
     
+    assert(0);
+
     case WAIT:
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
       if (!(--timeout_p1)) {
+        Log("TIME UP");
         state_p1 = nxtstate_p1;
+        Log("%d", (int) state_p1);
+        command_p1 = nxt_command_p1;
+        direction_p1 = nxt_direction_p1;
+        nxt_command_p1 = Command::Move;
+        nxt_direction_p1 = Direction::N;
       }
-      break;
-    
-    case CHECK:
-      state_p1 = WAIT;
-      break;
-    
-    case STOP:
-      Log("try to stop at (%d, %d)", target_p1.x, target_p1.y);
-      
       break;
 
     case MOVE:
       Log("MOVING to target (%d, %d)", target_p1.x, target_p1.y);
-      
+
+      if (command_p1 != Command::Move)
+        command_p1 = Command::Move, direction_p1 = Direction::N;
+
       //on arrival
       if (target_p1 == loc1) {
         if (Game::playrList[0].velocity.abs() < eps)
           direction = Direction::N;
-        else state_p1 = nxtstate_p1;  //get to nxt state
+        else { //get to nxt state
+          command_p1 = nxt_command_p1;
+          direction_p1 = nxt_direction_p1;
+          if (!timeout_p1) {
+            state_p1 = nxtstate_p1;
+            nxt_command_p1 = Command::Move;
+            nxt_direction_p1 = Direction::N;
+          } else {
+            state_p1 = WAIT;
+            nxt_command_p1 = wait_nxt_command_p1;
+            nxt_direction_p1 = wait_nxt_direction_p1;
+            wait_nxt_command_p1 = Command::Move;
+            wait_nxt_direction_p1 = Direction::N;
+          }
+        }
         break;
       }
+
+      Log("NOT ARRIVE");
 
       //get direction
       direction = Path::getDirectionBFS(loc1, target_p1);
@@ -196,6 +252,16 @@ namespace Mainctr {
         else direction_p1 = direction;
       }
       else direction_p1 = direction;
+      break;
+
+    //no use for now
+    case CHECK:
+      state_p1 = WAIT;
+      break;
+    
+    //no use for now
+    case STOP:
+      Log("try to stop at (%d, %d)", target_p1.x, target_p1.y);
       break;
 
     default:
