@@ -7,7 +7,7 @@ export CXX=/mingw64/bin/g++.exe
 build:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
-		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug; fi
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=false; fi
 	@make -C build
 
 all:
