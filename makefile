@@ -2,6 +2,8 @@
 TOKEN ?= submit
 SHELL := /bin/bash
 
+export CXX=/mingw/bin/g++
+
 build:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
