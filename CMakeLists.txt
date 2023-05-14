@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(Overcooked LANGUAGES C CXX)
+project(Overcooked LANGUAGES CXX)
 
 find_package(Git)
 
@@ -7,8 +7,9 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories("include")
 file(GLOB sources "source/*.cpp")
 add_library(Overcooked ${sources})
-target_link_libraries(Overcooked stdc++fs)
+target_link_libraries(Overcooked -static-libstdc++)
 # target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
+
 
 add_custom_target(GitTraceAdd
         COMMAND "${GIT_EXECUTABLE}" add -A . --ignore-errors
@@ -19,7 +20,11 @@ add_custom_target(GitTraceCommit
         --author="tracer-ps4 <tracer-ps4@nju.edu.cn>"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
-add_dependencies(GitTraceCommit GitTraceAdd) # Avoid data race
+if (ADD_TRACE)
+        add_dependencies(GitTraceCommit GitTraceAdd) # Avoid data race
+endif()
+
+
 add_dependencies(Overcooked GitTraceCommit)
 add_custom_command(TARGET Overcooked POST_BUILD
         COMMAND "${GIT_EXECUTABLE}"
