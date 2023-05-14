@@ -233,8 +233,8 @@ namespace Mainctr {
       nxt_direction_p1 = Game::surveDirection;
       nxtstate_p1 = FETCH_DIRTY;
 
-      command_p1 = Command::Access;
-      direction_p1 = plateDirection;
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
       break;
     case FETCH_DIRTY:
       state_p1 = MOVE;

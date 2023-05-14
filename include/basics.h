@@ -1,7 +1,7 @@
 #ifndef BASICS_H__
 #define BASICS_H__
 
-// #define NDEBUG
+#undef NDEBUG
 
 #include <string>
 #include <vector>
