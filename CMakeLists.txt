@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(Overcooked)
+project(Overcooked LANGUAGES C CXX)
 
 find_package(Git)
 
