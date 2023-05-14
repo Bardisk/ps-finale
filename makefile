@@ -2,12 +2,12 @@
 TOKEN ?= submit
 SHELL := /bin/bash
 
-export CXX=/mingw/bin/g++
+export CXX=/mingw64/bin/g++.exe
 
 build:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
-		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER /mingw/bin/g++; fi
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug; fi
 	@make -C build
 
 all:
