@@ -23,10 +23,20 @@ namespace Game{
     Direction::DirectionKind ingrdDirection[INGRD_NR_MAX];
     Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
     Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
+
+    Location chopLocation, potLocation, panLocation;
+    Direction::DirectionKind chopDirection, potDirection, panDirection;
+
+    std::optional<Cooker::CookerKind> needToCook = std::nullopt;
+    //recip_information
+    std::unordered_map<std::string, int> madeFrom, madeFor;
+    std::unordered_set<std::string> items;
+    std::unordered_map<std::string, std::vector<int>> ingrdPlace;
 }
 
 void init_read()
 {
+    using namespace Game;
     std::string s;
     std::stringstream ss;
 
@@ -58,83 +68,110 @@ void init_read()
                     continue;
                 Location to = location[direction];
                 if (!to.isvalid()) continue;
-                if (Map::tileMap[to] == Tile::PlateReturn) Game::dirtyDestination = location, Game::dirtyDirection = direction;
-                if (Map::tileMap[to] == Tile::PlateRack) Game::cleanDestination = location, Game::cleanDirection = direction;
-                if (Map::tileMap[to] == Tile::Sink) Game::washDestination = location, Game::washDirection = direction;
+                if (Map::tileMap[to] == Tile::PlateReturn) dirtyDestination = location, dirtyDirection = direction;
+                if (Map::tileMap[to] == Tile::PlateRack) cleanDestination = location, cleanDirection = direction;
+                if (Map::tileMap[to] == Tile::Sink) washDestination = location, washDirection = direction;
                 if (location == Location(4, 8)) {
                     Log("IN (4, 8)");
                     Log("%d\n", (int) Map::tileMap[to]);
                     Log("%c\n", Tile::encode(Map::tileMap[to]));
                 }
-                if (Map::tileMap[to] == Tile::ServiceWindow) Game::surveDestination = location, Game::surveDirection = direction;
+                if (Map::tileMap[to] == Tile::ServiceWindow) surveDestination = location, surveDirection = direction;
             }
         }
     }
 
-    Log("SERVE AT (%d, %d)", Game::surveDestination.x, Game::surveDestination.y);
+    Log("SERVE AT (%d, %d)", surveDestination.x, surveDestination.y);
 
     /* 读入原料箱：位置、名字、以及采购单价 */
-    ss >> Game::ingrdCnt;
-    for (int i = 0; i < Game::ingrdCnt; i++) {
+    ss >> ingrdCnt;
+    for (int i = 0; i < ingrdCnt; i++) {
         ss >> s;
         assert(s == "IngredientBox");
-        ss >> Game::ingrdList[i];
+        ss >> ingrdList[i];
+        if (ingrdPlace.find(ingrdList[i].name) == ingrdPlace.end())
+            ingrdPlace[ingrdList[i].name] = std::vector<int>();
+        ingrdPlace[ingrdList[i].name].push_back(i);
         for (int j = 0; j < Direction::Direction_NR; j++) {
             Direction::DirectionKind direction = (Direction::DirectionKind) j;
             if (Direction::encode(direction).size() > 1)
                 continue;
-            Location to = Game::ingrdList[i].location[direction];
+            Location to = ingrdList[i].location[direction];
             if (!to.isvalid()) continue;
             if (Map::tileMap[to] == Tile::Floor) {
-                Game::ingrdDestination[i] = to;
-                Game::ingrdDirection[i] = Direction::getrev(direction);
+                ingrdDestination[i] = to;
+                ingrdDirection[i] = Direction::getrev(direction);
             }
         }
     }
 
     /* 读入配方：加工时间、加工前的字符串表示、加工容器、加工后的字符串表示 */
-    ss >> Game::recipCnt;
-    for (int i = 0; i < Game::recipCnt; i++)
-        ss >> Game::recipList[i];
+    ss >> recipCnt;
+    for (int i = 0; i < recipCnt; i++) {
+        ss >> recipList[i];
+        //update recipe information into maps and sets
+        items.insert(recipList[i].nameAfter);
+        items.insert(recipList[i].nameBefore);
+        madeFrom[recipList[i].nameAfter] = i;
+        madeFor[recipList[i].nameBefore] = i;
+    }
 
     /* 读入总帧数、当前采用的随机种子、一共可能出现的订单数量 */
-    ss >> Game::totTime >> Game::randomizeSeed >> Game::totodCnt;
+    ss >> totTime >> randomizeSeed >> totodCnt;
 
     /* 读入订单的有效帧数、价格、权重、订单组成 */
-    for (int i = 0; i < Game::totodCnt; i++)
-        ss >> Game::totodList[i];
+    for (int i = 0; i < totodCnt; i++)
+        ss >> totodList[i];
     
-    for (int i = 0; i < Game::ingrdCnt; i++) {
-        if (Game::ingrdList[i].name == Game::totodList[0].requirement[0]) {
-            Game::indDestination = Game::ingrdDestination[i];
-            Game::indDirection = Game::ingrdDirection[i]; 
+    //will be neglected
+    for (int i = 0; i < ingrdCnt; i++) {
+        //no need to cook
+        if (ingrdList[i].name == totodList[0].requirement[0]) {
+            needToCook = Cooker::None;
+            indDestination = ingrdDestination[i];
+            indDirection = ingrdDirection[i]; 
         }
+    }
+    if (!needToCook.has_value()) {
+        std::string targetName = totodList[1].requirement[0];
+        //should be able to be made from
+        assert(madeFrom.find(targetName) != madeFrom.end());
+        
+        std::string prepareName = recipList[madeFrom[targetName]].nameBefore;
+        Log("Target Name: %s Prepare Name: %s", targetName.c_str(), prepareName.c_str());
+        needToCook = recipList[madeFrom[targetName]].kind;
+
+        //should have at least an corresponding ingredient box
+        assert(ingrdPlace[prepareName].size() > 0);
+        //choose randomly (0)
+        indDestination = ingrdDestination[ingrdPlace[prepareName][0]];
+        indDirection = ingrdDirection[ingrdPlace[prepareName][0]];
     }
 
     /* 读入玩家信息：初始坐标 */
-    ss >> Game::playrCnt;
-    assert(Game::playrCnt == 2);
-    for (int i = 0; i < Game::playrCnt; i++) {
-        ss >> Game::playrList[i].position;
-        Game::playrList[i].resume_time = 0;
-        Game::playrList[i].entity = std::nullopt;
+    ss >> playrCnt;
+    assert(playrCnt == 2);
+    for (int i = 0; i < playrCnt; i++) {
+        ss >> playrList[i].position;
+        playrList[i].resume_time = 0;
+        playrList[i].entity = std::nullopt;
     }
 
     /* 读入实体信息：坐标、实体组成 */
-    ss >> Game::enttyCnt;
-    for (int i = 0; i < Game::enttyCnt; i++) {
-        ss >> Game::enttyList[i].location;
-        ss >> Game::enttyList[i];
-        if (Game::enttyList[i].containerKind == Container::Plate) {
+    ss >> enttyCnt;
+    for (int i = 0; i < enttyCnt; i++) {
+        ss >> enttyList[i].location;
+        ss >> enttyList[i];
+        if (enttyList[i].containerKind == Container::Plate) {
             for (int j = 0; j < Direction::Direction_NR; j++) {
                 Direction::DirectionKind direction = (Direction::DirectionKind) j;
                 if (Direction::encode(direction).size() > 1)
                     continue;
-                Location to = Game::enttyList[i].location[direction];
+                Location to = enttyList[i].location[direction];
                 if (!to.isvalid()) continue;
                 if (Map::tileMap[to] == Tile::Floor) {
-                    Game::plateDirection = Direction::getrev(direction);
-                    Game::plateDestination = to;
+                    plateDirection = Direction::getrev(direction);
+                    plateDestination = to;
                 }
             }
         }
@@ -143,6 +180,7 @@ void init_read()
 
 bool frame_read(int nowFrame)
 {
+    using namespace Game;
     std::string s;
     std::stringstream ss;
     std::getline(std::cin, s, '\0');
@@ -159,27 +197,27 @@ bool frame_read(int nowFrame)
     }
     ss >> s;
     assert(s == "Frame");
-    ss >> Game::currentFrame;
-    assert(Game::currentFrame == nowFrame);
-    ss >> Game::remainFrame >> Game::fund;
-    Log("frame remaining: %d", Game::remainFrame);
+    ss >> currentFrame;
+    assert(currentFrame == nowFrame);
+    ss >> remainFrame >> fund;
+    Log("frame remaining: %d", remainFrame);
     /* 读入当前的订单剩余帧数、价格、以及配方 */
-    ss >> Game::orderCnt;
-    for (int i = 0; i < Game::orderCnt; i++) {
-        ss >> Game::orderList[i];
-        Log("%s", Game::orderList[i].requirement[0].c_str());
+    ss >> orderCnt;
+    for (int i = 0; i < orderCnt; i++) {
+        ss >> orderList[i];
+        Log("%s", orderList[i].requirement[0].c_str());
     }
     /* 读入玩家坐标、x方向速度、y方向速度、剩余复活时间 */
-    ss >> Game::playrCnt;
-    for (int i = 0; i < Game::playrCnt; i++) {
-        ss >> Game::playrList[i];
-        Log("player (%.2lf %.2lf)", Game::playrList[i].position.x, Game::playrList[i].position.y);
+    ss >> playrCnt;
+    for (int i = 0; i < playrCnt; i++) {
+        ss >> playrList[i];
+        Log("player (%.2lf %.2lf)", playrList[i].position.x, playrList[i].position.y);
     }
 
-    ss >> Game::enttyCnt;
-    for (int i = 0; i < Game::enttyCnt; i++) {
-        ss >> Game::enttyList[i].location;
-        ss >> Game::enttyList[i];
+    ss >> enttyCnt;
+    for (int i = 0; i < enttyCnt; i++) {
+        ss >> enttyList[i].location;
+        ss >> enttyList[i];
     }
     return false;
 }

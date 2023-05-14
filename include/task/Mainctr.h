@@ -5,10 +5,14 @@
 namespace Mainctr {
   enum StateType{
     MOVE,
+    STOP,
     FETCH_IND,
+    CHOP,
     FILL_PLATE,
     FETCH_PLATE,
     FETCH_DIRTY,
+    POT,
+    PAN,
     SURVE,
     GO_WASH,
     WASH_PLATE,

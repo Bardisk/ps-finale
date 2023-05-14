@@ -24,6 +24,9 @@ struct Position
   Position operator - (const Position &b) const {
     return (*this) + (-b);
   }
+  double distance(const Position &b) const {
+    return sqrt((x - b.x) * (x - b.x) + (y - b.y) * (y - b.y));
+  }
   friend std::istream& operator>> (std::istream &is, Position &position) {
     is >> position.y >> position.x;
     Log("position (%.2lf, %.2lf)", position.x, position.y);

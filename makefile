@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := build
 TOKEN ?= submit
 SHELL := /bin/bash
 
@@ -10,8 +10,6 @@ build:
 		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=FALSE; fi
 	@make -C build
 
-.PHONY: build
-
 all:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
@@ -22,7 +20,7 @@ clean:
 	@if [[ -d build ]]; then \
 		rm -r build; fi
 
-map=maps/level1/level1-3.txt
+map=maps/level2/level2-4.txt
 
 run:
 	@../QtOvercooked/QtOvercooked.exe -l $(map) -p build/main.exe
@@ -37,3 +35,4 @@ submit:
 		https://exam.problemsolving.top:8085/api/v2/submission/lab
 	@rm -r ${TEMP}
 
+.PHONY: build all clean run submit

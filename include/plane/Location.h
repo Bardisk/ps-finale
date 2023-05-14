@@ -6,7 +6,10 @@
 struct Location {
   int x, y;
   Location(int _x=0, int _y=0) : x(_x), y(_y) {}
-  Location(Position _p) : x(std::round(_p.x - 0.5)+eps), y(std::round(_p.y - 0.5)+eps) {}
+  Location(Position _p, Velocity velocity=Velocity(), Direction::DirectionKind towards=Direction::N)
+    : x(std::round(_p.x - 0.5 - (0.5 - 0.44 * (velocity.abs())  / (MAX_VELOCITY)) * Direction::dx[towards])+eps)
+    , y(std::round(_p.y - 0.5 - (0.5 - 0.44 * (velocity.abs())  / ( MAX_VELOCITY)) * Direction::dy[towards])+eps)
+  {}
   Location operator [] (Direction::DirectionKind direction) const {
     return Location(
       x + Direction::dx[direction],

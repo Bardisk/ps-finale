@@ -2,6 +2,8 @@
 #define VELOCITY
 #include <plane.h>
 
+#define MAX_VELOCITY 5.0
+
 struct Velocity
 {
   double x, y;

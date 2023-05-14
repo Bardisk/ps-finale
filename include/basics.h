@@ -13,6 +13,8 @@
 #include <cstdarg>
 #include <queue>
 #include <cstring>
+#include <unordered_map>
+#include <unordered_set>
 #include <cmath>
 
 #define N_MAX 25

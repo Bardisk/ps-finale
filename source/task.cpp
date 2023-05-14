@@ -1,18 +1,30 @@
 #include <basics.h>
 
 namespace Mainctr {
-  Command::CommandType command_p1, command_p2;
-  Direction::DirectionKind direction_p1 = Direction::N, direction_p2 = Direction::N;
+  using Direction::DirectionKind;
+  using Command::CommandType;
+
+  CommandType command_p1, command_p2;
+  DirectionKind direction_p1 = Direction::N, direction_p2 = Direction::N;
   StateType state_p1 = NONE, state_p2 = NONE;
   Location target_p1, target_p2;
+
   StateType nxtstate_p1 = NONE, nxtstate_p2 = NONE;
+  CommandType nxt_command_p1, nxt_command_p2;
+  DirectionKind nxt_direction_p1, nxt_direction_p2;
+
   bool firstplate = true;
   int timeout_p1=0, timeout_p2=0;
 
   void getDecision() {
-    Direction::DirectionKind direction;
-    Location loc1(Game::playrList[0].position);
-    Location loc2(Game::playrList[1].position);
+    DirectionKind direction;
+    
+    //get location
+    Location loc1(Game::playrList[0].position, Game::playrList[0].velocity, command_p1 == Command::Move ? direction_p1 : Direction::N);
+    Location loc2(Game::playrList[1].position, Game::playrList[1].velocity, command_p2 == Command::Move ? direction_p2 : Direction::N);
+    // #define pos1 Game::playrList[0].position
+    // #define pos2 Game::playrList[1].position
+
     Log("Current loc1 (%d, %d) loc2 (%d, %d)", loc1.x, loc1.y, loc2.x, loc2.y);
     // Path::abilityMap[loc1] = false;
     Path::abilityMap[loc2] = false;
@@ -20,7 +32,7 @@ namespace Mainctr {
     Log("Now velocity %.2lf", Game::playrList[0].velocity.abs());
 
     Location plateLocation;
-    Direction::DirectionKind plateDirection;
+    DirectionKind plateDirection;
     
     switch (state_p1)
     {
@@ -29,20 +41,28 @@ namespace Mainctr {
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
       break;
+    
     case FETCH_IND:
-      if (loc1 == Game::indDestination) {
-        state_p1 = FILL_PLATE;
-        command_p1 = Command::Access;
-        direction_p1 = Game::indDirection;
-      }
-      else {
+      // if (loc1 == Game::indDestination) {
+      //   state_p1 = FILL_PLATE;
+      //   command_p1 = Command::Access;
+      //   direction_p1 = Game::indDirection;
+      // }
+      // else {
         state_p1 = MOVE;
         target_p1 = Game::indDestination;
         command_p1 = Command::Move;
         direction_p1 = Direction::N;
-        nxtstate_p1 = FETCH_IND;
-      }
+        nxtstate_p1 = ;
+        nxt_command_p1 = Command::Access;
+
+      // }
       break;
+    
+    case CHOP:
+
+      break;
+
     case FILL_PLATE:
       if (firstplate) {
         plateLocation = Game::plateDestination;
@@ -65,6 +85,7 @@ namespace Mainctr {
         nxtstate_p1 = FILL_PLATE;
       }
       break;
+    
     case FETCH_PLATE:
       Log("FETCHING PLATE");
       if (firstplate) {
@@ -80,6 +101,7 @@ namespace Mainctr {
       command_p1 = Command::Access;
       direction_p1 = plateDirection;
       break;
+    
     case SURVE:
       Log("IM SURVING");
       if (loc1 == Game::surveDestination) {
@@ -97,6 +119,7 @@ namespace Mainctr {
         nxtstate_p1 = SURVE;
       }
       break;
+    
     case FETCH_DIRTY:
       if (loc1 == Game::dirtyDestination) {
         state_p1 = GO_WASH;
@@ -111,6 +134,7 @@ namespace Mainctr {
         nxtstate_p1 = FETCH_DIRTY;
       }
       break;
+    
     case GO_WASH:
       if (loc1 == Game::washDestination) {
         Log("GET SINK");
@@ -126,6 +150,7 @@ namespace Mainctr {
         nxtstate_p1 = GO_WASH;
       }
       break;
+    
     case WASH_PLATE:
       state_p1 = WAIT;
       timeout_p1 = 300;
@@ -133,13 +158,32 @@ namespace Mainctr {
       command_p1 = Command::Operate;
       direction_p1 = Game::washDirection;
       break;
+    
+    case WAIT:
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+      if (!(--timeout_p1)) {
+        state_p1 = nxtstate_p1;
+      }
+      break;
+    
+    case CHECK:
+      state_p1 = WAIT;
+      break;
+    
+    case STOP:
+      Log("try to stop at (%d, %d)", target_p1.x, target_p1.y);
+      
+      break;
+
     case MOVE:
       Log("MOVING to target (%d, %d)", target_p1.x, target_p1.y);
+      
       //on arrival
-      if (loc1 == target_p1) {
+      if (target_p1 == loc1) {
         if (Game::playrList[0].velocity.abs() < eps)
           direction = Direction::N;
-        else state_p1 = nxtstate_p1;
+        else state_p1 = nxtstate_p1;  //get to nxt state
         break;
       }
 
@@ -154,16 +198,6 @@ namespace Mainctr {
       else direction_p1 = direction;
       break;
 
-    case WAIT:
-      command_p1 = Command::Move;
-      direction_p1 = Direction::N;
-      if (!(--timeout_p1)) {
-        state_p1 = nxtstate_p1;
-      }
-      break;
-    case CHECK:
-      state_p1 = WAIT;
-      break;
     default:
       break;
     }
@@ -177,16 +211,18 @@ namespace Mainctr {
 }
 
 namespace Path {
+  using Direction::DirectionKind;
+
   Map::Matrix <bool, 1, 1> abilityMap;
   Map::Matrix <bool, 1, 1> visMap;
 
   Map::Matrix <Location, 1, 1> fromPoint;
-  Map::Matrix <Direction::DirectionKind, 1, 1> fromDirection;
+  Map::Matrix <DirectionKind, 1, 1> fromDirection;
 
   std::queue <Location> q;
   std::queue <Location> toClear;
-  Direction::DirectionKind getDirectionBFS(Location src, Location dst) {
-    // Direction::DirectionKind res = Direction::N;
+  DirectionKind getDirectionBFS(Location src, Location dst) {
+    // DirectionKind res = Direction::N;
     assert(q.empty());
     while (!q.empty()) q.pop();
     assert(toClear.empty());
@@ -203,11 +239,13 @@ namespace Path {
     while (!q.empty()) {
       Location now = q.front(); q.pop();
       for (int i = 0; i < Direction::Direction_NR; i++) {
-        Direction::DirectionKind direction = (Direction::DirectionKind) i;
+        DirectionKind direction = (DirectionKind) i;
         //only go straight
         if (Direction::encode(direction).size() > 1)
           continue;
         Location to = now[direction];
+        if (!to.isvalid())
+          continue;
         if (abilityMap[to] && !visMap[to]) {
           fromDirection[to] = direction;
           fromPoint[to] = now;
