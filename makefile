@@ -20,7 +20,7 @@ clean:
 	@if [[ -d build ]]; then \
 		rm -r build; fi
 
-map=maps/level2/level2-3.txt
+map=maps/level3/level3-1.txt
 
 run:
 	@../QtOvercooked/QtOvercooked.exe -l $(map) -p build/main.exe
@@ -28,6 +28,8 @@ run:
 fast:
 	@../QtOvercooked/runner.exe -l $(map) -p build/main.exe
 
+play:
+	@../QtOvercooked/QtOvercooked.exe -l $(map)
 
 submit:
 	$(eval TEMP := $(shell mktemp -d))

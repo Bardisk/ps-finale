@@ -20,9 +20,9 @@ namespace Mainctr {
   std::string needed_p1;
 
   Cooker::CookerKind firstCook, secondCook;
-  int firstTime, secondTime;
+  int firstTime_p1, secondTime_p1, firstTime_p2, secondTime_p2;
 
-  bool firstplate = true;
+  bool firstplate_p1 = true, firstplate_p2 = false;
   int timeout_p1=0, timeout_p2=0;
   // int nxt_timeout_p1=0, nxt_timeout_p2=0;
 
@@ -62,20 +62,20 @@ namespace Mainctr {
         assert(Game::madeFrom.find(needed_p1) != Game::madeFrom.end());
         if (Game::recipList[Game::madeFrom[needed_p1]].kind == Cooker::Chop) {
           firstCook = Cooker::Chop;
-          firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
-          Log("FIRSTTIME: %d", firstTime);
+          firstTime_p1 = Game::recipList[Game::madeFrom[needed_p1]].time;
+          Log("FIRSTTIME: %d", firstTime_p1);
           secondCook = Cooker::None;
           needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
         }
         else {
           firstCook = Cooker::None;
           secondCook = Game::recipList[Game::madeFrom[needed_p1]].kind;
-          secondTime = Game::recipList[Game::madeFrom[needed_p1]].time;
+          secondTime_p1 = Game::recipList[Game::madeFrom[needed_p1]].time;
           needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
           if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
             firstCook = Cooker::Chop;
-            firstTime = Game::recipList[Game::madeFrom[needed_p1]].time;
-            Log("FIRSTTIME UNDER: %d", firstTime);
+            firstTime_p1 = Game::recipList[Game::madeFrom[needed_p1]].time;
+            Log("FIRSTTIME UNDER: %d", firstTime_p1);
             needed_p1 = Game::recipList[Game::madeFrom[needed_p1]].nameBefore;
           }
         }
@@ -110,8 +110,8 @@ namespace Mainctr {
 
     case CHOPPING:
       state_p1 = WAIT;
-      timeout_p1 = firstTime;
-      Log("FIRSTTIME WITHIN: %d", firstTime);
+      timeout_p1 = firstTime_p1;
+      Log("FIRSTTIME WITHIN: %d", firstTime_p1);
 
       nxtstate_p1 = FILL_PLATE;
 
@@ -123,7 +123,7 @@ namespace Mainctr {
       break;
 
     case FILL_PLATE:
-      if (firstplate) {
+      if (firstplate_p1) {
         plateLocation = Game::plateDestination;
         plateDirection = Game::plateDirection;
       }
@@ -146,8 +146,8 @@ namespace Mainctr {
     
     case FETCH_PLATE:
       Log("FETCHING PLATE");
-      if (firstplate) {
-        firstplate = false;
+      if (firstplate_p1) {
+        firstplate_p1 = false;
         plateLocation = Game::plateDestination;
         plateDirection = Game::plateDirection;
       }
@@ -186,7 +186,7 @@ namespace Mainctr {
       direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
 
       state_p1 = WAIT;
-      timeout_p1 = secondTime;
+      timeout_p1 = secondTime_p1;
       nxt_command_p1 = Command::Access;
       nxt_direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
 
