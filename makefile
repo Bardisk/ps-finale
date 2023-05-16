@@ -1,16 +1,35 @@
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL := build
 TOKEN ?= submit
 SHELL := /bin/bash
+
+export CXX=/mingw64/bin/g++.exe
+
+build:
+	@if [[ ! -e build/Makefile ]]; then \
+		mkdir -p build; \
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DADD_TRACE=FALSE; fi
+	@make -C build
 
 all:
 	@if [[ ! -e build/Makefile ]]; then \
 		mkdir -p build; \
-		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug; fi
+		cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug -DADD_TRACE=TRUE; fi
 	@make -C build
 
 clean:
 	@if [[ -d build ]]; then \
 		rm -r build; fi
+
+map=maps/level3/level3-1.txt
+
+run:
+	@../QtOvercooked/QtOvercooked.exe -l $(map) -p build/main.exe
+
+fast:
+	@../QtOvercooked/runner.exe -l $(map) -p build/main.exe
+
+play:
+	@../QtOvercooked/QtOvercooked.exe -l $(map)
 
 submit:
 	$(eval TEMP := $(shell mktemp -d))
@@ -22,3 +41,4 @@ submit:
 		https://exam.problemsolving.top:8085/api/v2/submission/lab
 	@rm -r ${TEMP}
 
+.PHONY: build all clean run submit
