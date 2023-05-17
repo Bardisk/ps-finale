@@ -691,14 +691,12 @@ namespace StaticPath{
         //only go straight
         if (!Direction::isStraight(direction))
           continue;
-
         OrientationKind originalOrientation = now.orientation;
         OrientationKind nowOrientation = Direction::getOrientation(direction);
         //decide next point
         OrientedLocation to = (nowOrientation == originalOrientation) ?
           now.location[direction].getOriented(originalOrientation)    //within layer
         : now.location.getOriented(nowOrientation);                   //across layer
-
         //if illegel, abort
         if (!to.location.isvalid())
           continue;
