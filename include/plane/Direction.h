@@ -17,6 +17,13 @@ namespace Direction {
     R,
     N,
   };
+  enum OrientationKind {
+    Horizonal,
+    Vertical,
+    MainIncline,
+    SubIncline,
+    None
+  };
   const int Direction_NR = N;
   inline DirectionKind decode(std::string directionName) {
     if (directionName == "LD")
@@ -37,6 +44,26 @@ namespace Direction {
       return R;
     return N;
   }
+  inline OrientationKind getOrientation(DirectionKind direction) {
+    switch (direction)
+    {
+    case LU:
+    case RD:
+      return MainIncline;
+    case L:
+    case R:
+      return Horizonal;
+    case U:
+    case D:
+      return Vertical;
+    case LD:
+    case RU:
+      return SubIncline;
+    default:
+      break;
+    }
+    return None;
+  } 
   inline DirectionKind getrev(DirectionKind direction) {
     switch (direction)
     {

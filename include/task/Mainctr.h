@@ -36,7 +36,7 @@ namespace Mainctr {
     CommandType command;
     DirectionKind direction;
     Operation(CommandType _c, DirectionKind _d) : command(_c), direction(_d) {}
-    std::string encode() {
+    std::string encode() const {
       std::stringstream ss;
       ss << Command::encode(command) << " " << Direction::encode(direction) << '\n';
       return ss.str();

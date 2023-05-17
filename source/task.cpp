@@ -1,5 +1,35 @@
 #include <basics.h>
 
+int Task::timingCnt = 0;
+
+// #include <functional>
+// std::function taskComparer = [] (Task *a, Task* b) -> bool {return a->priority < b->priority;};
+
+using Cooker::CookerKind;
+
+std::priority_queue<Task> Task::globTaskHeap;
+
+std::string SingleCtr::getDecistion() {
+  assert(task.parent == this);
+  auto taskRes = task.getDesicion();
+  //need to fetch new task
+  while (!taskRes.has_value()) {
+    assert(!Task::globTaskHeap.empty());
+    task = Task::globTaskHeap.top();
+    Task::globTaskHeap.pop();
+    task.parent = this;
+    taskRes = task.getDesicion();
+  }
+  return taskRes.value().encode();
+}
+
+namespace DepGraph {
+  CookerKind firstCook, secondCook;
+  Task *generateTask(int orderPriority, Order *) {
+
+  }
+}
+
 namespace Mainctr {
   using Direction::DirectionKind;
   using Command::CommandType;

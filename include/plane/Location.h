@@ -16,6 +16,12 @@ struct Location {
       y + Direction::dy[direction]
     );
   }
+  Location upstream (Direction::DirectionKind direction) const {
+    return Location(
+      x - Direction::dx[direction],
+      y - Direction::dy[direction]
+    );
+  }
   Location operator ++(int) {
     if (y < Map::m - 1) {
       y++;
