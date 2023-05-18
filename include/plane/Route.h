@@ -9,6 +9,8 @@ struct Route
 {
   Location src, dst;
   DirectionKind direction;
+  Route(Location _src, Location _dst, DirectionKind _d)
+    : src(_src), dst(_dst), direction(_d) {}
   bool isin(const Location &location) const {
     assert(Direction::encode(direction).size() < 2);
     switch (direction)

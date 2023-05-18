@@ -9,5 +9,6 @@
 #include <task/Task.h>
 #include <task/SingleCtr.h>
 #include <task/DepGraph.h>
+#include <task/StaticPath.h>
 
 #endif

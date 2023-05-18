@@ -10,6 +10,7 @@
 #include <cassert>
 #include <optional>
 #include <sstream>
+#include <stack>
 #include <cstdarg>
 #include <queue>
 #include <cstring>

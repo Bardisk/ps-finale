@@ -18,12 +18,13 @@ namespace Direction {
     N,
   };
   enum OrientationKind {
-    Horizonal,
+    Horizonal = 0,
     Vertical,
     MainIncline,
     SubIncline,
     None
   };
+  const int StraightCount = MainIncline;
   const int Direction_NR = N;
   inline DirectionKind decode(std::string directionName) {
     if (directionName == "LD")
@@ -64,6 +65,19 @@ namespace Direction {
     }
     return None;
   } 
+  inline bool isStraight(DirectionKind direction) {
+    switch (direction)
+    {
+    case L:
+    case R:
+    case U:
+    case D:
+      return true;
+    default:
+      return false;
+    }
+    return false;
+  }
   inline DirectionKind getrev(DirectionKind direction) {
     switch (direction)
     {
