@@ -1,5 +1,35 @@
 #include <basics.h>
 
+int Task::timingCnt = 0;
+
+// #include <functional>
+// std::function taskComparer = [] (Task *a, Task* b) -> bool {return a->priority < b->priority;};
+
+using Cooker::CookerKind;
+
+std::priority_queue<Task> Task::globTaskHeap;
+
+std::string SingleCtr::getDecistion() {
+  assert(task.parent == this);
+  auto taskRes = task.getDesicion();
+  //need to fetch new task
+  while (!taskRes.has_value()) {
+    assert(!Task::globTaskHeap.empty());
+    task = Task::globTaskHeap.top();
+    Task::globTaskHeap.pop();
+    task.parent = this;
+    taskRes = task.getDesicion();
+  }
+  return taskRes.value().encode();
+}
+
+namespace DepGraph {
+  CookerKind firstCook, secondCook;
+  Task *generateTask(int orderPriority, Order *) {
+
+  }
+}
+
 namespace Mainctr {
   using Direction::DirectionKind;
   using Command::CommandType;
@@ -391,4 +421,127 @@ namespace Path {
       nxt = fromPoint[nxt];
     return fromDirection[nxt];
   }
+}
+
+
+namespace StaticPath{
+  //Avoid ado
+  using Direction::DirectionKind;
+  using Map::Matrix;
+  using Direction::OrientationKind;
+
+  //More abstraction...
+  using RouteList = std::optional<std::vector<Route>>;
+  using MartixRoute = Matrix<RouteList, 1, 1>;
+
+  Matrix<MartixRoute, 1, 1> routeTable;
+  
+  Matrix<bool, 1, 1> abilityMap;
+
+  OrientedLocation Location::getOriented(OrientationKind orientation) const {
+    return OrientedLocation(*this, orientation);
+  }
+
+  OrientedMatrix<int> visMap;
+  std::queue<OrientedLocation> q;
+  std::queue<OrientedLocation> toClear;
+  OrientedMatrix<OrientedLocation> fromPoint;
+  OrientedMatrix<DirectionKind> fromDirection;
+
+  void getSingleSourceBFS(Location src) {
+    assert(q.empty());
+    while (!q.empty()) q.pop();
+    assert(toClear.empty());
+    while (!toClear.empty()) toClear.pop();
+    assert(!visMap[src.getOriented(Direction::Horizonal)]);
+    assert(!visMap[src.getOriented(Direction::Vertical)]);
+
+    //OMG, bullshit!
+    visMap[src.getOriented(Direction::Horizonal)]
+    = visMap[src.getOriented(Direction::Vertical)] = 1;
+    q.push(src.getOriented(Direction::Horizonal));
+    q.push(src.getOriented(Direction::Vertical));
+    toClear.push(src.getOriented(Direction::Horizonal));
+    toClear.push(src.getOriented(Direction::Vertical));
+    
+    while (!q.empty()) {
+      auto now = q.front(); q.pop();
+      for (int i = 0; i < Direction::Direction_NR; i++) {
+        DirectionKind direction = (DirectionKind) i;
+        //only go straight
+        if (!Direction::isStraight(direction))
+          continue;
+        OrientationKind originalOrientation = now.orientation;
+        OrientationKind nowOrientation = Direction::getOrientation(direction);
+        //decide next point
+        OrientedLocation to = (nowOrientation == originalOrientation) ?
+          now.location[direction].getOriented(originalOrientation)    //within layer
+        : now.location.getOriented(nowOrientation);                   //across layer
+        
+        //if illegel, abort
+        if (!to.location.isvalid())
+          continue;
+
+        //if CAN BE visited and is NOT be visited, update
+        if (Path::abilityMap[to.location] && !visMap[to]) {
+          fromDirection[to] = direction;
+          fromPoint[to] = now;
+          visMap[to] = visMap[now] + 1;
+          q.push(to);
+          toClear.push(to);
+        }
+      }
+    }
+
+    for (auto location : visMap) {
+      if (location == src) {
+        routeTable[src][location] = std::nullopt;
+        continue;
+      }
+      int minCost = 0x3f3f3f3f;
+      OrientationKind minOrientation = Direction::None;
+      for (int i = 0; i < Direction::StraightCount; i++) {
+        OrientationKind orientation = (OrientationKind) i;
+        OrientedLocation orientedLocation = location.getOriented(orientation);
+        if (visMap[orientedLocation]) {
+          if (visMap[orientedLocation] < minCost) {
+            minCost = visMap[orientedLocation];
+            minOrientation = orientation;
+          }
+        }
+      }
+      if (~minCost) {
+        std::stack<DirectionKind> allRoute;
+        OrientedLocation now = location.getOriented(minOrientation);
+        assert(now.location != src);
+        while (now.location != src) {
+          if (now.location != fromPoint[now].location)
+            allRoute.push(fromDirection[now]);
+          now = fromPoint[now];
+        }
+        DirectionKind direction = Direction::N;
+        Location routeSrc = src, routeTarget = src;
+        routeTable[src][location] = RouteList();
+        while (routeTarget != location) {
+          //direction changes
+          if (direction != Direction::N && direction != allRoute.top()) {
+            routeTable[src][location].value().push_back(Route(routeSrc, routeTarget, direction));
+            routeSrc = routeTarget;
+          }
+          direction = allRoute.top();
+          allRoute.pop();
+          routeTarget = routeTarget[direction];
+        }
+        routeTable[src][location].value().push_back(Route(routeSrc, routeTarget, direction));
+      }
+      else routeTable[src][location] = std::nullopt; //easy
+    }
+
+    while (!q.empty()) q.pop();
+    while (!toClear.empty()) {
+      visMap[toClear.front()] = 0;
+      toClear.pop();
+    }
+  }
+
 }

@@ -13,5 +13,6 @@ namespace Map {
 #include <plane/Velocity.h>
 #include <plane/Location.h>
 #include <plane/Map.h>
+#include <plane/Route.h>
 
 #endif

@@ -3,6 +3,10 @@
 #define LOCATION
 #include <plane.h>
 
+namespace StaticPath {
+  struct OrientedLocation;
+}
+
 struct Location {
   int x, y;
   Location(int _x=0, int _y=0) : x(_x), y(_y) {}
@@ -16,6 +20,15 @@ struct Location {
       y + Direction::dy[direction]
     );
   }
+  Location upstream (Direction::DirectionKind direction) const {
+    return Location(
+      x - Direction::dx[direction],
+      y - Direction::dy[direction]
+    );
+  }
+
+  StaticPath::OrientedLocation getOriented(Direction::OrientationKind orientation) const;
+
   Location operator ++(int) {
     if (y < Map::m - 1) {
       y++;

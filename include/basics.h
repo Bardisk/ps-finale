@@ -10,9 +10,11 @@
 #include <cassert>
 #include <optional>
 #include <sstream>
+#include <stack>
 #include <cstdarg>
 #include <queue>
 #include <cstring>
+#include <queue>
 #include <unordered_map>
 #include <unordered_set>
 #include <cmath>
