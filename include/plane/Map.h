@@ -6,6 +6,7 @@ namespace Map{
   template <typename T, int N_SCALE, int M_SCALE>
   struct Matrix {
     T data[N_MAX * N_SCALE][M_MAX * M_SCALE];
+    // Matrix() {}
     struct LocalLocation : public Location {
       // Matrix *father;
       LocalLocation(int _x=0, int _y=0) : Location(_x, _y) {}

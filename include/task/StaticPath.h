@@ -9,7 +9,7 @@ using Direction::OrientationKind;
 
 namespace StaticPath{
   
-  using RouteList = std::vector<Route>;
+  using RouteList = std::optional<std::vector<Route>>;
   using MartixRoute = Matrix<RouteList, 1, 1>;
 
   extern Matrix<MartixRoute, 1, 1> routeTable;
@@ -20,13 +20,14 @@ namespace StaticPath{
     Location location;
     OrientationKind orientation;
 
-    OrientedLocation(Location _l, OrientationKind _o)
+    OrientedLocation(Location _l = Location(), OrientationKind _o = Direction::None)
       : location(_l), orientation(_o) {}
   };
   
   template <typename T>
   struct OrientedMatrix {
     Matrix<T, 1, 1> data[Direction::StraightCount];
+    // OrientedMatrix () {}
     T& operator [] (OrientedLocation orientedLocation) {
       return data[orientedLocation.orientation][orientedLocation.location];
     }

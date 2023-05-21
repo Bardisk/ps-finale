@@ -14,6 +14,8 @@ struct Ordertemplate
     std::string s;
     std::getline(is, s);
     std::stringstream tmp(s);
+    //critical bug!!!
+    order.requirement.clear();
     while (tmp >> s) {
       order.requirement.push_back(s);
     }
@@ -32,6 +34,8 @@ struct Order
     std::string s;
     std::getline(is, s);
     std::stringstream tmp(s);
+    //critical bug!!!
+    order.requirement.clear();
     while (tmp >> s) {
       order.requirement.push_back(s);
     }

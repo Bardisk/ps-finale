@@ -20,7 +20,7 @@ clean:
 	@if [[ -d build ]]; then \
 		rm -r build; fi
 
-map=maps/level3/level3-1.txt
+map=maps/level4/level4-2.txt
 
 run:
 	@../QtOvercooked/QtOvercooked.exe -l $(map) -p build/main.exe
