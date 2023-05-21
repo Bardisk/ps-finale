@@ -26,7 +26,7 @@ std::string SingleCtr::getDecistion() {
 namespace DepGraph {
   CookerKind firstCook, secondCook;
   Task *generateTask(int orderPriority, Order *) {
-
+    return NULL;
   }
 }
 
@@ -54,7 +54,10 @@ namespace Mainctr {
 
   bool firstplate_p1 = true, firstplate_p2 = false;
   int timeout_p1=0, timeout_p2=0;
+  bool cooked = false;
   // int nxt_timeout_p1=0, nxt_timeout_p2=0;
+  Order order_p1;
+  int curorder_cnt_p1 = 0;
 
   void getDecision() {
     DirectionKind direction;
@@ -79,6 +82,8 @@ namespace Mainctr {
     switch (state_p1)
     {
     case NONE:
+      order_p1 = Game::orderList[0];
+      curorder_cnt_p1 = 0;
       state_p1 = FETCH_IND;
       command_p1 = Command::Move;
       direction_p1 = Direction::N;
@@ -86,8 +91,8 @@ namespace Mainctr {
     
     case FETCH_IND:
       state_p1 = MOVE;
-
-      needed_p1 = Game::orderList[0].requirement[0];
+      cooked = false;
+      needed_p1 = order_p1.requirement[curorder_cnt_p1++];
       if (Game::ingrdPlace.find(needed_p1) == Game::ingrdPlace.end()) {
         assert(Game::madeFrom.find(needed_p1) != Game::madeFrom.end());
         if (Game::recipList[Game::madeFrom[needed_p1]].kind == Cooker::Chop) {
@@ -164,34 +169,11 @@ namespace Mainctr {
 
       state_p1 = MOVE;
 
-      target_p1 = plateLocation;
-      nxt_command_p1 = Command::Access;
-      nxt_direction_p1 = plateDirection;
-      nxtstate_p1 = FETCH_PLATE;
-      
-      command_p1 = Command::Move;
-      direction_p1 = Direction::N;
-
-      break;
-    
-    case FETCH_PLATE:
-      Log("FETCHING PLATE");
-      if (firstplate_p1) {
-        firstplate_p1 = false;
-        plateLocation = Game::plateDestination;
-        plateDirection = Game::plateDirection;
-      }
-      else {
-        plateLocation = Game::cleanDestination;
-        plateDirection = Game::cleanDirection;
-      }
-      state_p1 = MOVE;
-
-      if (secondCook == Cooker::None) {
-        target_p1 = Game::surveDestination;
+      if (cooked || secondCook == Cooker::None) {
+        target_p1 = plateLocation;
         nxt_command_p1 = Command::Access;
-        nxt_direction_p1 = Game::surveDirection;
-        nxtstate_p1 = FETCH_DIRTY;
+        nxt_direction_p1 = plateDirection;
+        nxtstate_p1 = cooked ? RETURN_COOK : FETCH_PLATE;
       }
       else {
         if (secondCook == Cooker::Pan) {
@@ -206,6 +188,78 @@ namespace Mainctr {
           nxtstate_p1 = COOK;
         }
       }
+      
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+
+      break;
+    
+    case TO_PLATE:
+      if (curorder_cnt_p1 < order_p1.requirement.size()) {
+        Log("%d %d NOT SATIS", curorder_cnt_p1, order_p1.requirement.size());
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        state_p1 = FETCH_IND;
+        break;
+      }
+      if (firstplate_p1) {
+        plateLocation = Game::plateDestination;
+        plateDirection = Game::plateDirection;
+      }
+      else {
+        plateLocation = Game::cleanDestination;
+        plateDirection = Game::cleanDirection;
+      }
+      state_p1 = MOVE;
+
+      target_p1 = plateLocation;
+      nxt_command_p1 = Command::Move;
+      nxt_direction_p1 = Direction::N;
+      nxtstate_p1 = FETCH_PLATE;
+
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+      break;
+
+    case FETCH_PLATE:
+      if (curorder_cnt_p1 < order_p1.requirement.size()) {
+        Log("FOR NEW DISH");
+        command_p1 = Command::Move;
+        direction_p1 = Direction::N;
+        state_p1 = FETCH_IND;
+        break;
+      }
+      Log("FETCHING PLATE");
+      if (firstplate_p1) {
+        firstplate_p1 = false;
+        plateLocation = Game::plateDestination;
+        plateDirection = Game::plateDirection;
+      }
+      else {
+        plateLocation = Game::cleanDestination;
+        plateDirection = Game::cleanDirection;
+      }
+      state_p1 = MOVE;
+
+      // if (secondCook == Cooker::None) {
+      target_p1 = Game::surveDestination;
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = Game::surveDirection;
+      nxtstate_p1 = FETCH_DIRTY;
+      // }
+      // else {
+      //   if (secondCook == Cooker::Pan) {
+      //     target_p1 = Game::panDestination;
+      //     nxt_command_p1 = Command::Access;
+      //     nxt_direction_p1 = Game::panDirection;
+      //     nxtstate_p1 = COOK;
+      //   } else {
+      //     target_p1 = Game::potDestination;
+      //     nxt_command_p1 = Command::Access;
+      //     nxt_direction_p1 = Game::potDirection;
+      //     nxtstate_p1 = COOK;
+      //   }
+      // }
 
       command_p1 = Command::Access;
       direction_p1 = plateDirection;
@@ -220,7 +274,21 @@ namespace Mainctr {
       nxt_command_p1 = Command::Access;
       nxt_direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
 
-      nxtstate_p1 = SURVE;
+      nxtstate_p1 = FILL_PLATE;
+      cooked = true;
+      break;
+    
+    case RETURN_COOK:
+      command_p1 = Command::Move;
+      direction_p1 = Direction::N;
+
+      state_p1 = MOVE;
+      target_p1 = (secondCook == Cooker::Pan ? Game::panDestination : Game::potDestination);
+      nxt_command_p1 = Command::Access;
+      nxt_direction_p1 = (secondCook == Cooker::Pan ? Game::panDirection : Game::potDirection);
+      nxtstate_p1 = TO_PLATE;
+
+      cooked = false;
       break;
 
     case SURVE:
@@ -270,7 +338,7 @@ namespace Mainctr {
       state_p1 = WAIT;
       timeout_p1 = 200;
 
-      nxtstate_p1 = FETCH_IND;
+      nxtstate_p1 = NONE;
 
       nxt_command_p1 = Command::Access;
       nxt_direction_p1 = Direction::N;
@@ -423,6 +491,9 @@ namespace Path {
   }
 }
 
+StaticPath::OrientedLocation Location::getOriented(Direction::OrientationKind orientation) const {
+  return StaticPath::OrientedLocation(*this, orientation);
+}
 
 namespace StaticPath{
   //Avoid ado
@@ -437,10 +508,8 @@ namespace StaticPath{
   Matrix<MartixRoute, 1, 1> routeTable;
   
   Matrix<bool, 1, 1> abilityMap;
-
-  OrientedLocation Location::getOriented(OrientationKind orientation) const {
-    return OrientedLocation(*this, orientation);
-  }
+  
+  
 
   OrientedMatrix<int> visMap;
   std::queue<OrientedLocation> q;

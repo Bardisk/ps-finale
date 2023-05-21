@@ -12,11 +12,13 @@ namespace Mainctr {
     CHOP,
     CHOPPING,
     FILL_PLATE,
+    TO_PLATE,
     FETCH_PLATE,
     FETCH_DIRTY,
     POT,
     PAN,
     SURVE,
+    RETURN_COOK,
     GO_WASH,
     WASH_PLATE,
     WAIT,
@@ -25,12 +27,12 @@ namespace Mainctr {
     COOKING,
     NONE,
   };
-  enum TargetType {
-    Wash,
-    Plate,
-    Fetch,
-    Order,
-  };
+  // enum TargetType {
+  //   Wash,
+  //   Plate,
+  //   Fetch,
+  //   Order,
+  // };
 
   struct Operation {
     CommandType command;

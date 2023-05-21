@@ -60,6 +60,10 @@ void init_read()
             break;
         }
     }
+
+    // for (auto location : Map::tileMap)
+    //     StaticPath::getSingleSourceBFS(location);
+    
     for (auto location : Map::tileMap) {
         if (Map::tileMap[location] == Tile::Floor) {
             for (int i = 0; i < Direction::Direction_NR; i++) {
@@ -256,3 +260,16 @@ bool frame_read(int nowFrame)
     }
     return false;
 }
+
+
+// void encrypt(char *s) {
+//     for (; *s; s++) {                   // 遍历所有的字符
+//         if (*s >= 'a' && *s <= 'z') {   // 如果是小写字符
+//             if (*s == 'z')              // 如果是 ‘z’，设置为 ‘a’
+//                 *s = 'a';
+//             else                        // 否则，ASCII 码加一
+//                 *s = *s + 1;                
+//         }
+//     }
+//     return ;
+// }

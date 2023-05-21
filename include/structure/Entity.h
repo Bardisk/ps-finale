@@ -19,6 +19,8 @@ struct Entity
     std::getline(is, s);
     std::stringstream tmp(s);
     bool beforeColon = true;
+    //critical bug!!!
+    entity.entityList.clear();
     while (tmp >> s) {
       if (s == "@") {
         entity.crashed = true;
