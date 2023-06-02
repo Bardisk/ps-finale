@@ -31,8 +31,9 @@ struct Task {
     Done
   }curState;
 
-  bool needOperation, needWait;
+  bool needOperation, needPut, needWait;
   int timeout, priority;
+  Operation operation;
   
   bool operator < (const Task& b) const {
     return priority < b.priority;
@@ -53,28 +54,7 @@ struct Task {
     return ;
   }
 
-  std::optional<Operation> getDesicion() {
-    switch (curState)
-    {
-    case PreMove:
-      
-      break;
-    case Put:
-      break;
-    case Pick:
-      break;
-    case Wait:
-      break;
-
-    case Operate:
-      break;
-    case Move:
-      break;
-    default:
-      break;
-    }
-    return std::nullopt;
-  }
+  std::optional<Operation> getDesicion();
   
 };
 

@@ -4,7 +4,8 @@
 #include <task.h>
 
 struct SingleCtr {
-  Player *me, *mate;
+  SingleCtr *mate;
+  Player *me;
   Task task;
   
   // Operation operation;

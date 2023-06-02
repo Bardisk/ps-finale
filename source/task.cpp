@@ -23,6 +23,63 @@ std::string SingleCtr::getDecistion() {
   return taskRes.value().encode();
 }
 
+using Mainctr::Operation;
+
+std::optional<Operation> Task::getDesicion() {
+  // if ()
+  restart:
+  switch (curState)
+  {
+  case PreMove:
+    
+    break;
+  case Put:
+    break;
+  case Pick:
+    break;
+  case Wait:
+    break;
+
+  case Operate:
+    break;
+  case Move:
+    if (operation.command != Command::Move)
+      operation = Operation(Command::Move, Direction::N);
+    //on arrival
+    if (route.dst == parent->me->position) {
+      //stopped
+      if (parent->me->velocity.abs() < eps){
+        if (route.dst == target) {
+          if (needPut) {
+            curState = Put;
+            goto restart;
+          }
+          if (needOperation){
+            curState = Operate;
+            goto restart;
+          }
+          if (needWait) {
+            curState = Wait;
+            goto restart;
+          }
+        } else {
+          assert(StaticPath::routeTable[route.dst][target].has_value());
+          assert(!StaticPath::routeTable[route.dst][target].value().empty());
+          route = StaticPath::routeTable[route.dst][target].value()[0];
+          goto restart;
+        }
+        //find next Route
+      }
+      else operation = Operation(Command::Move, Direction::N);
+    }
+    return operation; 
+    break;
+  default:
+    break;
+  }
+  return std::nullopt;
+}
+
 namespace DepGraph {
   CookerKind firstCook, secondCook;
   Task *generateTask(int orderPriority, Order *) {
@@ -372,8 +429,8 @@ namespace Mainctr {
 
       //on arrival
       if (target_p1 == loc1) {
-        if (Game::playrList[0].velocity.abs() < eps)
-          direction = Direction::N;
+        if (Game::playrList[0].velocity.abs() > eps)
+          direction_p1 = Direction::N;
         else { //get to nxt state
           command_p1 = nxt_command_p1;
           direction_p1 = nxt_direction_p1;
@@ -518,6 +575,8 @@ namespace StaticPath{
   OrientedMatrix<DirectionKind> fromDirection;
 
   void getSingleSourceBFS(Location src) {
+    Log("From (%d, %d)", src.x, src.y);
+    if (!Path::abilityMap[src]) return ;
     assert(q.empty());
     while (!q.empty()) q.pop();
     assert(toClear.empty());
@@ -535,24 +594,29 @@ namespace StaticPath{
     
     while (!q.empty()) {
       auto now = q.front(); q.pop();
+      Log("processing x: %d y: %d, orient: %d", now.location.x, now.location.y, (int) now.orientation);
       for (int i = 0; i < Direction::Direction_NR; i++) {
         DirectionKind direction = (DirectionKind) i;
         //only go straight
         if (!Direction::isStraight(direction))
           continue;
+
         OrientationKind originalOrientation = now.orientation;
         OrientationKind nowOrientation = Direction::getOrientation(direction);
         //decide next point
         OrientedLocation to = (nowOrientation == originalOrientation) ?
           now.location[direction].getOriented(originalOrientation)    //within layer
         : now.location.getOriented(nowOrientation);                   //across layer
-        
+
         //if illegel, abort
         if (!to.location.isvalid())
           continue;
 
+        // Log("Get Location (%d %d), orient: %d", to.location.x, to.location.y, (int) to.orientation);
+
         //if CAN BE visited and is NOT be visited, update
         if (Path::abilityMap[to.location] && !visMap[to]) {
+          Log("Pass Location (%d %d), orient: %d Val: %d", to.location.x, to.location.y, (int) to.orientation, visMap[now] + 1);
           fromDirection[to] = direction;
           fromPoint[to] = now;
           visMap[to] = visMap[now] + 1;
@@ -561,6 +625,8 @@ namespace StaticPath{
         }
       }
     }
+
+    Log("Pass BFS routing");
 
     for (auto location : visMap) {
       if (location == src) {
@@ -579,7 +645,8 @@ namespace StaticPath{
           }
         }
       }
-      if (~minCost) {
+      // Log("MINCOST %d", minCost);
+      if (minCost != 0x3f3f3f3f) {
         std::stack<DirectionKind> allRoute;
         OrientedLocation now = location.getOriented(minOrientation);
         assert(now.location != src);
@@ -590,7 +657,7 @@ namespace StaticPath{
         }
         DirectionKind direction = Direction::N;
         Location routeSrc = src, routeTarget = src;
-        routeTable[src][location] = RouteList();
+        routeTable[src][location] = std::vector<Route>();
         while (routeTarget != location) {
           //direction changes
           if (direction != Direction::N && direction != allRoute.top()) {
@@ -601,9 +668,13 @@ namespace StaticPath{
           allRoute.pop();
           routeTarget = routeTarget[direction];
         }
+        assert(routeTable[src][location].has_value());
         routeTable[src][location].value().push_back(Route(routeSrc, routeTarget, direction));
       }
-      else routeTable[src][location] = std::nullopt; //easy
+      else {
+        routeTable[src][location] = std::nullopt; //easy
+        // Log("Unreachable (%d, %d)", location.x, location.y);
+      }
     }
 
     while (!q.empty()) q.pop();

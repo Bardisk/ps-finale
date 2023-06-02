@@ -61,8 +61,8 @@ void init_read()
         }
     }
 
-    // for (auto location : Map::tileMap)
-    //     StaticPath::getSingleSourceBFS(location);
+    for (auto location : Map::tileMap)
+        StaticPath::getSingleSourceBFS(location);
     
     for (auto location : Map::tileMap) {
         if (Map::tileMap[location] == Tile::Floor) {
@@ -88,7 +88,6 @@ void init_read()
 
     Log("SERVE AT (%d, %d)", surveDestination.x, surveDestination.y);
 
-    /* 读入原料箱：位置、名字、以及采购单价 */
     ss >> ingrdCnt;
     for (int i = 0; i < ingrdCnt; i++) {
         ss >> s;
@@ -112,7 +111,6 @@ void init_read()
 
     Log("END IRGBOX");
 
-    /* 读入配方：加工时间、加工前的字符串表示、加工容器、加工后的字符串表示 */
     ss >> recipCnt;
     for (int i = 0; i < recipCnt; i++) {
         ss >> recipList[i];
@@ -125,40 +123,13 @@ void init_read()
 
     Log("END REP");
 
-    /* 读入总帧数、当前采用的随机种子、一共可能出现的订单数量 */
     ss >> totTime >> randomizeSeed >> totodCnt;
 
-    /* 读入订单的有效帧数、价格、权重、订单组成 */
     for (int i = 0; i < totodCnt; i++)
         ss >> totodList[i];
     
     Log("TOTOD INIT");
-    //will be neglected
-    // for (int i = 0; i < ingrdCnt; i++) {
-    //     //no need to cook
-    //     if (ingrdList[i].name == totodList[0].requirement[0]) {
-    //         needToCook = Cooker::None;
-    //         indDestination = ingrdDestination[i];
-    //         indDirection = ingrdDirection[i]; 
-    //     }
-    // }
-    // if (!needToCook.has_value()) {
-    //     std::string targetName = totodList[1].requirement[0];
-    //     //should be able to be made from
-    //     assert(madeFrom.find(targetName) != madeFrom.end());
-        
-    //     std::string prepareName = recipList[madeFrom[targetName]].nameBefore;
-    //     Log("Target Name: %s Prepare Name: %s", targetName.c_str(), prepareName.c_str());
-    //     needToCook = recipList[madeFrom[targetName]].kind;
 
-    //     //should have at least an corresponding ingredient box
-    //     assert(ingrdPlace[prepareName].size() > 0);
-    //     //choose randomly (0)
-    //     indDestination = ingrdDestination[ingrdPlace[prepareName][0]];
-    //     indDirection = ingrdDirection[ingrdPlace[prepareName][0]];
-    // }
-
-    /* 读入玩家信息：初始坐标 */
     ss >> playrCnt;
     assert(playrCnt == 2);
     for (int i = 0; i < playrCnt; i++) {
@@ -169,7 +140,6 @@ void init_read()
 
     Log("END PL");
 
-    /* 读入实体信息：坐标、实体组成 */
     ss >> enttyCnt;
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
@@ -224,10 +194,6 @@ bool frame_read(int nowFrame)
     std::stringstream ss;
     std::getline(std::cin, s, '\0');
     ss.str(s);
-    /*
-      如果输入流中还有数据，说明游戏已经在请求下一帧了
-      这时候我们应该跳过当前帧，以便能够及时响应游戏。
-    */
     if (std::cin.rdbuf()->in_avail() > 0)
     {
         std::cerr << "Warning: skipping frame " << nowFrame
@@ -240,13 +206,11 @@ bool frame_read(int nowFrame)
     assert(currentFrame == nowFrame);
     ss >> remainFrame >> fund;
     Log("frame remaining: %d", remainFrame);
-    /* 读入当前的订单剩余帧数、价格、以及配方 */
     ss >> orderCnt;
     for (int i = 0; i < orderCnt; i++) {
         ss >> orderList[i];
         Log("%s", orderList[i].requirement[0].c_str());
     }
-    /* 读入玩家坐标、x方向速度、y方向速度、剩余复活时间 */
     ss >> playrCnt;
     for (int i = 0; i < playrCnt; i++) {
         ss >> playrList[i];
