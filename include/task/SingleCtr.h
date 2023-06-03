@@ -7,6 +7,7 @@ struct SingleCtr {
   SingleCtr *mate;
   Player *me;
   Task task;
+  bool locked;
   
   // Operation operation;
   std::string getDecistion();

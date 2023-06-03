@@ -25,55 +25,146 @@ std::string SingleCtr::getDecistion() {
 
 using Mainctr::Operation;
 
+Task::State Task::nextState(Task::State now) {
+  switch (now)
+  {
+  case PreMove:
+    now = Pick;
+    break;
+  case Pick:
+    now = Move;
+    break;
+  case Move:
+    now = Put;
+    break;
+  case Put:
+    now = Operate;
+    break;
+  case Operate:
+    now = Wait;
+    break;
+  case Wait:
+    now = Done;
+    break;
+  default:
+    assert(0);
+    break;
+  }
+  check:
+  switch (now)
+  {
+  case Pick:
+    if (!needPick) {
+      now = Move;
+      goto check;
+    }
+    break;
+  case Move:
+    if (source == target) {
+      now = Put;
+      goto check;
+    }
+    break;
+  case Put:
+    if (!needPut) {
+      now = Operate;
+      goto check; 
+    }
+    break;
+  case Operate:
+    if (!needOperation) {
+      now = Wait;
+      goto check;
+    }
+    break;
+  case Wait:
+    if (!needWait) {
+      now = Done;
+      goto check;
+    }
+    break;
+  case Done:
+    break;
+  default:
+    assert(0);
+    break;
+  }
+  return now;
+}
+
 std::optional<Operation> Task::getDesicion() {
   // if ()
+  Location selfLocation = parent->me->position;
   restart:
   switch (curState)
   {
+  //Prepare
   case PreMove:
-    
-    break;
-  case Put:
-    break;
+    assert(selfLocation == source);
+    curState = nextState(PreMove);
+    goto restart;
+
+  //Pick, if necessary
   case Pick:
-    break;
-  case Wait:
+    operation = Operation(Command::Access, pickDirection);
+    curState = nextState(Pick);
+    return operation;
     break;
 
-  case Operate:
-    break;
+  //Move, until get to the destination
   case Move:
     if (operation.command != Command::Move)
       operation = Operation(Command::Move, Direction::N);
     //on arrival
-    if (route.dst == parent->me->position) {
-      //stopped
+    if (route.dst == (Location) parent->me->position) {
+      //route is end
       if (parent->me->velocity.abs() < eps){
         if (route.dst == target) {
-          if (needPut) {
-            curState = Put;
-            goto restart;
-          }
-          if (needOperation){
-            curState = Operate;
-            goto restart;
-          }
-          if (needWait) {
-            curState = Wait;
-            goto restart;
-          }
+          //next state
+          curState = nextState(Move);
         } else {
+          //find next Route
           assert(StaticPath::routeTable[route.dst][target].has_value());
           assert(!StaticPath::routeTable[route.dst][target].value().empty());
           route = StaticPath::routeTable[route.dst][target].value()[0];
-          goto restart;
         }
-        //find next Route
+        goto restart;
       }
+      //try to stop
       else operation = Operation(Command::Move, Direction::N);
     }
+    //go on
+    else operation = Operation(Command::Move, route.direction);
     return operation; 
     break;
+
+  //Put, if necessary
+  case Put:
+    operation = Operation(Command::Access, putDirection);
+    curState = nextState(Put);
+    return operation;
+    break;
+  
+  //Operate, if necessary
+  case Operate:
+    operation = Operation(Command::Operate, operateDirection);
+    curState = nextState(Operate);
+    return operation;
+    break;
+
+  //Wait, if necessary and until timeout is 0
+  case Wait:
+    if (--timeout)
+      return operation;
+    else {
+      curState = nextState(Wait);
+      return operation;
+    }
+    break;
+  
+  //Done
+  case Done:
+    return std::nullopt;
   default:
     break;
   }
@@ -561,13 +652,13 @@ namespace StaticPath{
   //More abstraction...
   using RouteList = std::optional<std::vector<Route>>;
   using MartixRoute = Matrix<RouteList, 1, 1>;
+  using MartixDistance = Matrix<int, 1, 1>;
 
   Matrix<MartixRoute, 1, 1> routeTable;
+  Matrix<MartixDistance, 1, 1> disTable;
   
   Matrix<bool, 1, 1> abilityMap;
   
-  
-
   OrientedMatrix<int> visMap;
   std::queue<OrientedLocation> q;
   std::queue<OrientedLocation> toClear;
@@ -646,6 +737,7 @@ namespace StaticPath{
         }
       }
       // Log("MINCOST %d", minCost);
+      disTable[src][location] = minCost;
       if (minCost != 0x3f3f3f3f) {
         std::stack<DirectionKind> allRoute;
         OrientedLocation now = location.getOriented(minOrientation);

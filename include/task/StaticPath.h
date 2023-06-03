@@ -11,8 +11,10 @@ namespace StaticPath{
   
   using RouteList = std::optional<std::vector<Route>>;
   using MartixRoute = Matrix<RouteList, 1, 1>;
+  using MartixDistance = Matrix<int, 1, 1>;
 
   extern Matrix<MartixRoute, 1, 1> routeTable;
+  extern Matrix<MartixDistance, 1, 1> disTable;
   
   extern Matrix<bool, 1, 1> abilityMap;
   

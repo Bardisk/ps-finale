@@ -27,6 +27,7 @@
 #define ORDER_NR_MAX 25
 #define PLAYR_NR_MAX 2
 #define ENTTY_NR_MAX 20
+#define ATTEN_ORDER_NR 3
 
 const double eps=1e-5;
 

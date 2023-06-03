@@ -24,6 +24,10 @@ namespace Game{
     Location washDestination, cleanDestination, surveDestination, dirtyDestination, plateDestination, indDestination;
     Direction::DirectionKind washDirection, cleanDirection, surveDirection, dirtyDirection, plateDirection, indDirection;
 
+    std::vector<Direction::DirectionKind> plateDirectionList;
+    std::vector<Location> plateDestinationList;
+    int plateCnt;
+
     Location chopDestination, potDestination, panDestination;
     Direction::DirectionKind chopDirection, potDirection, panDirection;
 
@@ -32,6 +36,8 @@ namespace Game{
     std::unordered_map<std::string, int> madeFrom, madeFor;
     std::unordered_set<std::string> items;
     std::unordered_map<std::string, std::vector<int>> ingrdPlace;
+
+    AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
 }
 
 void init_read()
