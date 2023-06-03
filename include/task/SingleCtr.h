@@ -6,7 +6,7 @@
 struct SingleCtr {
   SingleCtr *mate;
   Player *me;
-  Task task;
+  Task *task;
   bool locked;
   
   // Operation operation;

@@ -43,10 +43,35 @@ struct Order
   }
 };
 
+struct Dish {
+  std::optional<int> chop;
+  std::optional<std::pair<Cooker::CookerKind, int>> heat;
+  Location boxDestination;
+  DirectionKind boxDirection;
+  Dish() {}
+  Dish(std::string name);
+
+  //helper functions
+  Cooker::CookerKind heatKind() {
+    assert(heat.has_value());
+    return heat.value().first;
+  }
+  Location heatDestination();
+  DirectionKind heatDirection();
+  int heatTime() {
+    assert(heat.has_value());
+    return heat.value().second;
+  }
+  int chopTime() {
+    assert(chop.has_value());
+    return chop.value();
+  }
+};
+
 struct AttentionOrder
 {
   // int price;
-  std::vector<std::string> requirement;
+  std::vector<Dish> requirement;
   std::vector<bool> completed;
   int completeCnt;
 
@@ -66,7 +91,7 @@ struct AttentionOrder
     curState(GetPlate)
   {
     for (auto target : order.requirement) {
-      requirement.push_back(target);
+      requirement.push_back(Dish(target));
       completed.push_back(0);  
     }
   }
