@@ -43,11 +43,14 @@ struct Order
   }
 };
 
+struct AttenionOrder;
+
 struct Dish {
   std::optional<int> chop;
   std::optional<std::pair<Cooker::CookerKind, int>> heat;
   Location boxDestination;
   DirectionKind boxDirection;
+  AttentionOrder *parent;
   Dish() {}
   Dish(std::string name);
 
@@ -97,6 +100,14 @@ struct AttentionOrder
     for (auto target : order.requirement) {
       requirement.push_back(Dish(target));
       completed.push_back(0);  
+    }
+  }
+
+  std::vector<Task *> taskPool;
+
+  ~AttentionOrder() {
+    for (auto taskpointer : taskPool) {
+      delete taskpointer;
     }
   }
 };

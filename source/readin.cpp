@@ -26,7 +26,9 @@ namespace Game{
 
     std::vector<Direction::DirectionKind> plateDirectionList;
     std::vector<Location> plateDestinationList;
-    int plateCnt;
+    int readyPlateCnt;
+    int dirtyPlateCnt;
+    int cleanPlateCnt;
 
     Location chopDestination, potDestination, panDestination;
     Direction::DirectionKind chopDirection, potDirection, panDirection;
@@ -192,8 +194,8 @@ void init_read()
             }
         }
     }
-    plateCnt = plateDestinationList.size();
-    assert(plateCnt);
+    readyPlateCnt = plateDestinationList.size();
+    assert(readyPlateCnt);
     Log("END INIT");
 }
 
