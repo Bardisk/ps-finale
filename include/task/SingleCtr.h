@@ -4,8 +4,10 @@
 #include <task.h>
 
 struct SingleCtr {
-  Player *me, *mate;
+  SingleCtr *mate;
+  Player *me;
   Task task;
+  bool locked;
   
   // Operation operation;
   std::string getDecistion();

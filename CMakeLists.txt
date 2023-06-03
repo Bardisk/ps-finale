@@ -7,8 +7,8 @@ find_package(Git)
 set(CMAKE_CXX_STANDARD 20)
 include_directories("include")
 file(GLOB sources "source/*.cpp")
-add_library(Overcooked ${sources})
-target_link_libraries(Overcooked stdc++fs)
+# add_library(Overcooked ${sources})
+# target_link_libraries(Overcooked stdc++fs)
 # target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
 
 if (ADD_TRACE)
@@ -24,11 +24,11 @@ if (ADD_TRACE)
         add_dependencies(Overcooked GitTraceCommit)
 endif()
 
-add_custom_command(TARGET Overcooked POST_BUILD
-        COMMAND "${GIT_EXECUTABLE}"
-        commit -q --allow-empty --no-verify -m "compile succeed"
-        --author="tracer-ps4 <tracer-ps4@nju.edu.cn>"
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+# add_custom_command(TARGET Overcooked POST_BUILD
+#         COMMAND "${GIT_EXECUTABLE}"
+#         commit -q --allow-empty --no-verify -m "compile succeed"
+#         --author="tracer-ps4 <tracer-ps4@nju.edu.cn>"
+#         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 # Your custom tests below
 add_executable(main ${sources})

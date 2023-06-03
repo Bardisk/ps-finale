@@ -31,6 +31,8 @@ namespace Game{
   extern std::unordered_map<std::string, std::vector<int>> ingrdPlace;
   extern Location chopDestination, potDestination, panDestination;
   extern Direction::DirectionKind chopDirection, potDirection, panDirection;
+
+  
 }
 
 #endif

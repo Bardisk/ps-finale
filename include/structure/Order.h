@@ -42,4 +42,38 @@ struct Order
     return is;
   }
 };
+
+struct AttentionOrder
+{
+  // int price;
+  std::vector<std::string> requirement;
+  std::vector<bool> completed;
+  int completeCnt;
+
+  Location targetPlate;
+  enum State {
+    GetPlate,
+    Prepare,
+    Surve,
+    Done
+  } curState;
+
+  AttentionOrder() {}
+
+  AttentionOrder(const Order &order) :
+    completeCnt(0),
+    targetPlate(),
+    curState(GetPlate)
+  {
+    for (auto target : order.requirement) {
+      requirement.push_back(target);
+      completed.push_back(0);  
+    }
+  }
+};
+
+namespace Game {
+  extern AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
+}
+
 #endif

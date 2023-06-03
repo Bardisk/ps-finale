@@ -6,9 +6,10 @@
 #include "task/Command.h"
 #include "task/Mainctr.h"
 #include "task/Path.h"
-#include <task/Task.h>
-#include <task/SingleCtr.h>
 #include <task/DepGraph.h>
 #include <task/StaticPath.h>
+#include <task/Task.h>
+#include <task/SingleCtr.h>
+#include <task/GameCtr.h>
 
 #endif
