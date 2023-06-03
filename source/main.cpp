@@ -1,4 +1,5 @@
 #include <basics.h>
+#define OLD
 
 int main()
 {
@@ -8,6 +9,8 @@ int main()
     std::cerr << std::nounitbuf;
     std::string s;
     std::stringstream ss;
+
+    Log("Begin INIT");
 
     init_read();
 
@@ -20,7 +23,12 @@ int main()
         /* 输出当前帧的操作，此处仅作示例 */
         std::cout << "Frame " << i << "\n";
 
+#ifdef OLD
         std::string response = Mainctr::respond();
+#else
+        std::string response = GameCtr::respond();
+#endif
+
         std::cout << response;
 
         // flush the output stream
