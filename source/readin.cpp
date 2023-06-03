@@ -38,6 +38,7 @@ namespace Game{
     std::unordered_map<std::string, std::vector<int>> ingrdPlace;
 
     AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
+    bool attentionInitialized = false;
 }
 
 void init_read()
@@ -159,6 +160,8 @@ void init_read()
                 if (Map::tileMap[to] == Tile::Floor) {
                     plateDirection = Direction::getrev(direction);
                     plateDestination = to;
+                    plateDirectionList.push_back(Direction::getrev(direction));
+                    plateDestinationList.push_back(to);
                 }
             }
         }
@@ -189,6 +192,8 @@ void init_read()
             }
         }
     }
+    plateCnt = plateDestinationList.size();
+    assert(plateCnt);
     Log("END INIT");
 }
 
@@ -216,6 +221,14 @@ bool frame_read(int nowFrame)
         ss >> orderList[i];
         Log("%s", orderList[i].requirement[0].c_str());
     }
+    
+    //Cold Start
+    if (!attentionInitialized) {
+        for (int i = 0; i < ATTEN_ORDER_NR; i++) {
+            attentionOrderList[i] = orderList[i];
+        }
+    }
+
     ss >> playrCnt;
     for (int i = 0; i < playrCnt; i++) {
         ss >> playrList[i];

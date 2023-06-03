@@ -68,6 +68,10 @@ struct Dish {
   }
 };
 
+namespace Game {
+  extern std::vector<Dish> dishList;
+}
+
 struct AttentionOrder
 {
   // int price;
@@ -98,6 +102,7 @@ struct AttentionOrder
 };
 
 namespace Game {
+  extern bool attentionInitialized;
   extern AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
 }
 
