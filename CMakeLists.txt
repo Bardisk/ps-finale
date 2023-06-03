@@ -7,9 +7,9 @@ find_package(Git)
 set(CMAKE_CXX_STANDARD 20)
 include_directories("include")
 file(GLOB sources "source/*.cpp")
-# add_library(Overcooked ${sources})
-# target_link_libraries(Overcooked stdc++fs)
-# target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
+add_library(Overcooked ${sources})
+target_link_libraries(Overcooked stdc++fs)
+target_link_libraries(Overcooked -static-libgcc -static-libstdc++)
 
 if (ADD_TRACE)
         add_custom_target(GitTraceAdd
