@@ -135,7 +135,6 @@ void init_read()
         ss >> totodList[i];
     
     Log("TOTOD INIT");
-
     ss >> playrCnt;
     assert(playrCnt == 2);
     for (int i = 0; i < playrCnt; i++) {

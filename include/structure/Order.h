@@ -8,7 +8,6 @@ struct Ordertemplate
   int price;
   int frequency;
   std::vector<std::string> requirement;
-
   //to-do change to integerlist
   friend std::istream& operator >> (std::istream& is, Ordertemplate &order) {
     is >> order.validFrame >> order.price >> order.frequency;
