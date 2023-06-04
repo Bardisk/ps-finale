@@ -4,6 +4,7 @@ namespace Map{
     int n, m;
     Matrix<char, 1, 1> charMap;
     Matrix<Tile::TileKind, 1, 1> tileMap;
+    Matrix<int, 1, 1> lockMap;
 };
 
 namespace Game{
@@ -26,6 +27,7 @@ namespace Game{
 
     std::vector<Direction::DirectionKind> plateDirectionList;
     std::vector<Location> plateDestinationList;
+    std::set<int> readyPlates, absentPlates;
     int readyPlateCnt;
     int dirtyPlateCnt;
     int cleanPlateCnt;
@@ -41,6 +43,9 @@ namespace Game{
 
     AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
     bool attentionInitialized = false;
+    int poolDirtyCnt = 0, serveDirtyCnt = 0;
+    int panTime, potTime;
+    int attentionMaxCnt;
 }
 
 void init_read()
@@ -97,6 +102,7 @@ void init_read()
 
     Log("SERVE AT (%d, %d)", surveDestination.x, surveDestination.y);
 
+    /* INGREDIENT BOXES */
     ss >> ingrdCnt;
     for (int i = 0; i < ingrdCnt; i++) {
         ss >> s;
@@ -120,6 +126,7 @@ void init_read()
 
     Log("END IRGBOX");
 
+    /* RECIPES */
     ss >> recipCnt;
     for (int i = 0; i < recipCnt; i++) {
         ss >> recipList[i];
@@ -138,6 +145,8 @@ void init_read()
         ss >> totodList[i];
     
     Log("TOTOD INIT");
+
+    /* PLAYERS */
     ss >> playrCnt;
     assert(playrCnt == 2);
     for (int i = 0; i < playrCnt; i++) {
@@ -148,10 +157,12 @@ void init_read()
 
     Log("END PL");
 
+    /* ENTITIES: PLATE POT PAN */
     ss >> enttyCnt;
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
+        /* PLATES */
         if (enttyList[i].containerKind == Container::Plate) {
             for (int j = 0; j < Direction::Direction_NR; j++) {
                 Direction::DirectionKind direction = (Direction::DirectionKind) j;
@@ -196,6 +207,9 @@ void init_read()
     }
     readyPlateCnt = plateDestinationList.size();
     assert(readyPlateCnt);
+    for (int i = 0; i < readyPlateCnt; i++)
+        readyPlates.insert(i);
+    attentionMaxCnt = std::min(readyPlateCnt, ATTEN_ORDER_NR);
     Log("END INIT");
 }
 
@@ -226,7 +240,7 @@ bool frame_read(int nowFrame)
     
     //Cold Start
     if (!attentionInitialized) {
-        for (int i = 0; i < ATTEN_ORDER_NR; i++) {
+        for (int i = 0; i < attentionMaxCnt; i++) {
             attentionOrderList[i] = orderList[i];
         }
     }
@@ -241,19 +255,19 @@ bool frame_read(int nowFrame)
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
+        if (enttyList[i].containerKind == Container::DirtyPlates) {
+            if (enttyList[i].location == dirtyDestination[dirtyDirection]) {
+                serveDirtyCnt += enttyList[i].sum;
+            } else if (enttyList[i].location == washDestination[washDirection]) {
+                poolDirtyCnt += enttyList[i].sum;
+            }
+        }
+        if (enttyList[i].containerKind == Container::Pan) {
+            
+        }
+        if (enttyList[i].containerKind == Container::Pot) {
+           
+        }
     }
     return false;
 }
-
-
-// void encrypt(char *s) {
-//     for (; *s; s++) {                   // 遍历所有的字符
-//         if (*s >= 'a' && *s <= 'z') {   // 如果是小写字符
-//             if (*s == 'z')              // 如果是 ‘z’，设置为 ‘a’
-//                 *s = 'a';
-//             else                        // 否则，ASCII 码加一
-//                 *s = *s + 1;                
-//         }
-//     }
-//     return ;
-// }

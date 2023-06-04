@@ -43,7 +43,8 @@ struct Order
   }
 };
 
-struct AttenionOrder;
+struct AttentionOrder;
+struct Task;
 
 struct Dish {
   std::optional<int> chop;
@@ -82,7 +83,10 @@ struct AttentionOrder
   std::vector<bool> completed;
   int completeCnt;
 
-  Location targetPlate;
+  // Location targetPlateDestination;
+  // DirectionKind targetPlateDirection;
+  int targetPlate;
+
   enum State {
     GetPlate,
     Prepare,
@@ -94,7 +98,7 @@ struct AttentionOrder
 
   AttentionOrder(const Order &order) :
     completeCnt(0),
-    targetPlate(),
+    targetPlate(-1),
     curState(GetPlate)
   {
     for (auto target : order.requirement) {
@@ -104,12 +108,13 @@ struct AttentionOrder
   }
 
   std::vector<Task *> taskPool;
-
-  ~AttentionOrder() {
-    for (auto taskpointer : taskPool) {
-      delete taskpointer;
-    }
+  void appendTask(Task *taskpointer) {
+    taskPool.push_back(taskpointer);
   }
+
+  std::optional<Task *> getPlate();
+
+  ~AttentionOrder();
 };
 
 namespace Game {

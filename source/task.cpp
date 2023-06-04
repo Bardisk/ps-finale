@@ -363,3 +363,40 @@ Location Dish::heatDestination() {
 DirectionKind Dish::heatDirection() {
   return (heatKind() == Cooker::Pan ? Game::panDirection : Game::potDirection);
 }
+
+AttentionOrder::~AttentionOrder() {
+  for (auto taskpointer : taskPool) {
+    delete taskpointer;
+  }
+}
+
+//return a task to getPlate
+//if null, plate has been got
+std::optional<Task *> AttentionOrder::getPlate() {
+  assert(curState == GetPlate);
+  assert(targetPlate == -1);
+  //already have a plate (COLD START)
+  if (Game::readyPlateCnt > 0) {
+    assert(Game::readyPlateCnt == Game::readyPlates.size());
+    Game::readyPlateCnt--;
+    // targetPlate = Game::readyPlates.begin();
+    // Game::absentPlates.insert(*Game::readyPlates.begin());
+    Game::readyPlates.erase(Game::readyPlates.begin());
+    curState = Prepare;
+    return std::nullopt;
+  }
+  else {
+    assert(Game::absentPlates.size() > 0);
+    // targetPlate = Game::absentPlates.begin();
+    // Game::absentPlates.erase(Game::absentPlates.begin());
+    // // curState = Prepare;
+    // Task *putPlate = new Task(
+    //   src = Game::cleanDestination,
+    //   dst = Game::plateDestinationList[targetPlate],
+    //   operate = true,
+    //   pick = true,
+    //   put = true,
+    //   wait = 
+    // );
+  }
+}

@@ -21,6 +21,10 @@ struct Entity
     bool beforeColon = true;
     //critical bug!!!
     entity.entityList.clear();
+    entity.crashed = false;
+    entity.currentFrame = -1;
+    entity.totalFrame = -1;
+    entity.overcooked = false;
     while (tmp >> s) {
       if (s == "@") {
         entity.crashed = true;

@@ -32,7 +32,14 @@ namespace Game{
   extern Location chopDestination, potDestination, panDestination;
   extern Direction::DirectionKind chopDirection, potDirection, panDirection;
 
-  
+  extern std::vector<Direction::DirectionKind> plateDirectionList;
+  extern std::vector<Location> plateDestinationList;
+  extern std::set<int> readyPlates, absentPlates;
+  extern int readyPlateCnt;
+  extern int dirtyPlateCnt;
+  extern int cleanPlateCnt;
+
+  extern int attentionMaxCnt;
 }
 
 #endif
