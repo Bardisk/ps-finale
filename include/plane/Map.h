@@ -54,5 +54,6 @@ namespace Map{
   };
   extern Matrix<char, 1, 1> charmap;
   extern Matrix<Tile::TileKind, 1, 1> tileMap;
+  extern Matrix<int, 1, 1> lockMap;
 };
 #endif

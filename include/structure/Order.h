@@ -43,13 +43,20 @@ struct Order
   }
 };
 
+struct AttentionOrder;
+struct Task;
+
 struct Dish {
   std::optional<int> chop;
   std::optional<std::pair<Cooker::CookerKind, int>> heat;
   Location boxDestination;
   DirectionKind boxDirection;
+  AttentionOrder *parent;
   Dish() {}
   Dish(std::string name);
+
+  bool ended;
+  Task *getTask();
 
   //helper functions
   Cooker::CookerKind heatKind() {
@@ -68,6 +75,10 @@ struct Dish {
   }
 };
 
+namespace Game {
+  extern std::vector<Dish> dishList;
+}
+
 struct AttentionOrder
 {
   // int price;
@@ -75,11 +86,14 @@ struct AttentionOrder
   std::vector<bool> completed;
   int completeCnt;
 
-  Location targetPlate;
+  // Location targetPlateDestination;
+  // DirectionKind targetPlateDirection;
+  int targetPlate;
+
   enum State {
     GetPlate,
     Prepare,
-    Surve,
+    Serve,
     Done
   } curState;
 
@@ -87,7 +101,7 @@ struct AttentionOrder
 
   AttentionOrder(const Order &order) :
     completeCnt(0),
-    targetPlate(),
+    targetPlate(-1),
     curState(GetPlate)
   {
     for (auto target : order.requirement) {
@@ -95,9 +109,20 @@ struct AttentionOrder
       completed.push_back(0);  
     }
   }
+
+  std::vector<Task *> taskPool;
+  void appendTask(Task *taskpointer) {
+    taskPool.push_back(taskpointer);
+  }
+
+  std::optional<Task *> getPlate();
+  Task *serveOrder();
+
+  ~AttentionOrder();
 };
 
 namespace Game {
+  extern bool attentionInitialized;
   extern AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
 }
 

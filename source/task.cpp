@@ -8,6 +8,7 @@ int Task::timingCnt = 0;
 using Cooker::CookerKind;
 
 std::priority_queue<Task> Task::globTaskHeap;
+std::unordered_set<Task *> taskSet;
 
 using Mainctr::Operation;
 
@@ -99,10 +100,11 @@ std::optional<Operation> Task::getDesicion() {
 
   //Move, until get to the destination
   case Move:
+    assert(route.dst.isvalid());
     if (operation.command != Command::Move)
       operation = Operation(Command::Move, Direction::N);
     //on arrival
-    if (route.dst == (Location) parent->me->position) {
+    if (parent->routeLocked || route.dst == (Location) parent->me->position) {
       //route is end
       if (parent->me->velocity.abs() < eps){
         if (route.dst == target) {
@@ -113,6 +115,35 @@ std::optional<Operation> Task::getDesicion() {
           assert(StaticPath::routeTable[route.dst][target].has_value());
           assert(!StaticPath::routeTable[route.dst][target].value().empty());
           route = StaticPath::routeTable[route.dst][target].value()[0];
+          if (parent->mate->task->curState == Task::Move) {
+            if (parent->mate->routeLocked) {
+              if (route.isin((Location) parent->mate->me->position)) {
+                parent->routeLocked = true; //mutual dead clock;
+                assert(0);
+                return Operation(Command::Move, Direction::N);
+              }
+            }
+            else {
+              auto intersetRes = route.intersect(parent->mate->task->route);
+              if (intersetRes.has_value()) {
+                if (intersetRes.value() == route.src) {
+                  parent->routeLocked = true;
+                  return Operation(Command::Move, Direction::N);
+                }
+                route = Route(
+                  route.src,
+                  intersetRes.value(),
+                  route.direction
+                );
+              }
+            }
+          } else {
+            if (route.isin((Location) parent->mate->me->position)) {
+              parent->routeLocked = true;
+              return Operation(Command::Move, Direction::N);
+            }
+          }
+          parent->routeLocked = false;
         }
         goto restart;
       }
@@ -326,6 +357,7 @@ std::string SingleCtr::getDecistion() {
 }
 
 Dish::Dish(std::string name) {
+  ended = false;
   Log("Prepare %s", name.c_str());
   if (Game::ingrdPlace.find(name) == Game::ingrdPlace.end()) {
     assert(Game::madeFrom.find(name) != Game::madeFrom.end());
@@ -362,4 +394,217 @@ Location Dish::heatDestination() {
 
 DirectionKind Dish::heatDirection() {
   return (heatKind() == Cooker::Pan ? Game::panDirection : Game::potDirection);
+}
+
+AttentionOrder::~AttentionOrder() {
+  for (auto taskpointer : taskPool) {
+    delete taskpointer;
+  }
+}
+
+bool Task::usePan() {
+  return needOperation && needPut && !needWait && target == Game::panDestination && putDirection == Game::panDirection;
+}
+
+bool Task::usePot() {
+  return needOperation && needPut && !needWait && target == Game::potDestination && putDirection == Game::potDirection;
+}
+
+bool Task::isPickDirtyPlate() {
+  return needOperation && needPick && needWait && needPut && source == Game::dirtyDestination && target == Game::washDestination && putDirection == Game::washDirection && pickDirection == Game::dirtyDirection;
+}
+
+Task *Dish::getTask() {
+  if (chop.has_value()) {
+    Task *getIngrdToChop = new Task(
+      boxDestination,               //src
+      Game::chopDestination,        //dst
+      true,                        //operate
+      true,                        //pick
+      true,                          //put
+      true,                         //wait
+      chopTime(),                   //time
+      0,                            //prior
+      Game::chopDirection,          //putD
+      boxDirection,                 //pickD
+      Game::chopDirection           //operateD
+    );
+    taskSet.insert(getIngrdToChop);
+    if (heat.has_value()) {
+      Task *getChopToHeat = new Task (
+        Game::chopDestination,               //src
+        Game::chopDestination,        //dst
+        true,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        heatDirection(),          //putD
+        Game::chopDirection,                 //pickD
+        heatDirection()           //operateD
+      );
+      getIngrdToChop->next = getChopToHeat;
+      Task *getHeatToPlate = new Task (
+        heatDestination(),               //src
+        Game::plateDestinationList[parent->targetPlate],        //dst
+        false,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        Game::plateDirectionList[parent->targetPlate],          //putD
+        heatDirection(),                 //pickD
+        Direction::N           //operateD
+      );
+      getChopToHeat->next = getHeatToPlate;
+      Task *returnHeat = new Task(
+        Game::plateDestinationList[parent->targetPlate],               //src
+        heatDestination(),        //dst
+        false,                        //operate
+        false,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        heatDirection(),          //putD
+        Direction::N,                 //pickD
+        Direction::N           //operateD
+      );
+      returnHeat->dish = this;
+      getHeatToPlate->next = returnHeat;
+    }
+    else {
+      Task *getChopToPlate = new Task (
+        Game::chopDestination,               //src
+        Game::plateDestinationList[parent->targetPlate],        //dst
+        false,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        Game::plateDirectionList[parent->targetPlate],          //putD
+        Game::chopDirection,                 //pickD
+        Direction::N           //operateD
+      );
+      getChopToPlate->dish = this;
+      getIngrdToChop->next = getChopToPlate;
+    }
+  } else {
+    if (heat.has_value()) {
+      Task *getIngrdToHeat = new Task(
+        boxDestination,               //src
+        heatDestination(),        //dst
+        true,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                            //time
+        0,                            //prior
+        heatDirection(),          //putD
+        boxDirection,                 //pickD
+        heatDirection()           //operateD
+      );
+      taskSet.insert(getIngrdToHeat);
+      Task *getHeatToPlate = new Task(
+        heatDestination(),               //src
+        Game::plateDestinationList[parent->targetPlate],        //dst
+        false,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        Game::plateDirectionList[parent->targetPlate],          //putD
+        heatDirection(),                 //pickD
+        Direction::N           //operateD
+      );
+      getIngrdToHeat->next = getHeatToPlate;
+      Task *returnHeat = new Task(
+        Game::plateDestinationList[parent->targetPlate],               //src
+        heatDestination(),        //dst
+        false,                        //operate
+        false,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                   //time
+        0,                            //prior
+        heatDirection(),          //putD
+        Direction::N,                 //pickD
+        Direction::N           //operateD
+      );
+      returnHeat->dish = this;
+      getHeatToPlate->next = returnHeat;
+    }
+    else {
+      Task *getIngrdToPlate = new Task(
+        boxDestination,               //src
+        Game::plateDestinationList[parent->targetPlate],        //dst
+        false,                        //operate
+        true,                         //pick
+        true,                          //put
+        false,                         //wait
+        0,                            //time
+        0,                            //prior
+        Game::plateDirectionList[parent->targetPlate],          //putD
+        boxDirection,                 //pickD
+        Direction::N           //operateD
+      );
+      getIngrdToPlate->dish = this;
+      taskSet.insert(getIngrdToPlate);
+    }
+  }
+}
+
+Task *AttentionOrder::serveOrder() {
+  assert(curState == Serve);
+  Task *servePlate = new Task(
+    Game::plateDestinationList[targetPlate],               //src
+    Game::surveDestination,        //dst
+    false,                        //operate
+    true,                         //pick
+    true,                          //put
+    false,                         //wait
+    0,                            //time
+    0,                            //prior
+    Game::surveDirection,          //putD
+    Game::plateDirectionList[targetPlate],                 //pickD
+    Direction::N           //operateD
+  );
+  taskSet.insert(servePlate);
+  curState = Done;
+  return servePlate;
+}
+
+//return a task to getPlate
+//if null, plate has been got
+std::optional<Task *> AttentionOrder::getPlate() {
+  assert(curState == GetPlate);
+  assert(targetPlate == -1);
+  //already have a plate (COLD START)
+  if (Game::readyPlateCnt > 0) {
+    assert(Game::readyPlateCnt == Game::readyPlates.size());
+    Game::readyPlateCnt--;
+    // targetPlate = Game::readyPlates.begin();
+    // Game::absentPlates.insert(*Game::readyPlates.begin());
+    Game::readyPlates.erase(Game::readyPlates.begin());
+    curState = Prepare;
+    return std::nullopt;
+  }
+  else {
+    assert(Game::absentPlates.size() > 0);
+    // targetPlate = Game::absentPlates.begin();
+    // Game::absentPlates.erase(Game::absentPlates.begin());
+    // // curState = Prepare;
+    // Task *putPlate = new Task(
+    //   src = Game::cleanDestination,
+    //   dst = Game::plateDestinationList[targetPlate],
+    //   operate = true,
+    //   pick = true,
+    //   put = true,
+    //   wait = 
+    // );
+  }
 }

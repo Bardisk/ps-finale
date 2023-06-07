@@ -4,6 +4,7 @@ namespace Map{
     int n, m;
     Matrix<char, 1, 1> charMap;
     Matrix<Tile::TileKind, 1, 1> tileMap;
+    Matrix<int, 1, 1> lockMap;
 };
 
 namespace Game{
@@ -26,7 +27,10 @@ namespace Game{
 
     std::vector<Direction::DirectionKind> plateDirectionList;
     std::vector<Location> plateDestinationList;
-    int plateCnt;
+    std::set<int> readyPlates, absentPlates;
+    int readyPlateCnt;
+    int dirtyPlateCnt;
+    int cleanPlateCnt;
 
     Location chopDestination, potDestination, panDestination;
     Direction::DirectionKind chopDirection, potDirection, panDirection;
@@ -38,6 +42,10 @@ namespace Game{
     std::unordered_map<std::string, std::vector<int>> ingrdPlace;
 
     AttentionOrder attentionOrderList[ATTEN_ORDER_NR];
+    bool attentionInitialized = false;
+    int poolDirtyCnt = 0, serveDirtyCnt = 0;
+    int panTime, potTime;
+    int attentionMaxCnt;
 }
 
 void init_read()
@@ -82,11 +90,11 @@ void init_read()
                 if (Map::tileMap[to] == Tile::PlateRack) cleanDestination = location, cleanDirection = direction;
                 if (Map::tileMap[to] == Tile::Sink) washDestination = location, washDirection = direction;
                 if (Map::tileMap[to] == Tile::ChoppingStation) chopDestination = location, chopDirection = direction;
-                if (location == Location(4, 8)) {
-                    Log("IN (4, 8)");
-                    Log("%d\n", (int) Map::tileMap[to]);
-                    Log("%c\n", Tile::encode(Map::tileMap[to]));
-                }
+                // if (location == Location(4, 8)) {
+                //     Log("IN (4, 8)");
+                //     Log("%d\n", (int) Map::tileMap[to]);
+                //     Log("%c\n", Tile::encode(Map::tileMap[to]));
+                // }
                 if (Map::tileMap[to] == Tile::ServiceWindow) surveDestination = location, surveDirection = direction;
             }
         }
@@ -94,6 +102,7 @@ void init_read()
 
     Log("SERVE AT (%d, %d)", surveDestination.x, surveDestination.y);
 
+    /* INGREDIENT BOXES */
     ss >> ingrdCnt;
     for (int i = 0; i < ingrdCnt; i++) {
         ss >> s;
@@ -117,6 +126,7 @@ void init_read()
 
     Log("END IRGBOX");
 
+    /* RECIPES */
     ss >> recipCnt;
     for (int i = 0; i < recipCnt; i++) {
         ss >> recipList[i];
@@ -135,6 +145,8 @@ void init_read()
         ss >> totodList[i];
     
     Log("TOTOD INIT");
+
+    /* PLAYERS */
     ss >> playrCnt;
     assert(playrCnt == 2);
     for (int i = 0; i < playrCnt; i++) {
@@ -145,10 +157,12 @@ void init_read()
 
     Log("END PL");
 
+    /* ENTITIES: PLATE POT PAN */
     ss >> enttyCnt;
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
+        /* PLATES */
         if (enttyList[i].containerKind == Container::Plate) {
             for (int j = 0; j < Direction::Direction_NR; j++) {
                 Direction::DirectionKind direction = (Direction::DirectionKind) j;
@@ -159,6 +173,8 @@ void init_read()
                 if (Map::tileMap[to] == Tile::Floor) {
                     plateDirection = Direction::getrev(direction);
                     plateDestination = to;
+                    plateDirectionList.push_back(Direction::getrev(direction));
+                    plateDestinationList.push_back(to);
                 }
             }
         }
@@ -189,6 +205,11 @@ void init_read()
             }
         }
     }
+    readyPlateCnt = plateDestinationList.size();
+    assert(readyPlateCnt);
+    for (int i = 0; i < readyPlateCnt; i++)
+        readyPlates.insert(i);
+    attentionMaxCnt = std::min(readyPlateCnt, ATTEN_ORDER_NR);
     Log("END INIT");
 }
 
@@ -216,6 +237,14 @@ bool frame_read(int nowFrame)
         ss >> orderList[i];
         Log("%s", orderList[i].requirement[0].c_str());
     }
+    
+    //Cold Start
+    if (!attentionInitialized) {
+        for (int i = 0; i < attentionMaxCnt; i++) {
+            attentionOrderList[i] = orderList[i];
+        }
+    }
+
     ss >> playrCnt;
     for (int i = 0; i < playrCnt; i++) {
         ss >> playrList[i];
@@ -226,19 +255,23 @@ bool frame_read(int nowFrame)
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
+        if (enttyList[i].containerKind == Container::DirtyPlates) {
+            if (enttyList[i].location == dirtyDestination[dirtyDirection]) {
+                serveDirtyCnt += enttyList[i].sum;
+            } else if (enttyList[i].location == washDestination[washDirection]) {
+                poolDirtyCnt += enttyList[i].sum;
+            }
+        }
+        if (enttyList[i].containerKind == Container::Pan) {
+            // assert(~enttyList[i].currentFrame);
+            // assert(~enttyList[i].totalFrame);
+            Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+        }
+        if (enttyList[i].containerKind == Container::Pot) {
+            // assert(~enttyList[i].currentFrame);
+            // assert(~enttyList[i].totalFrame);
+            Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+        }
     }
     return false;
 }
-
-
-// void encrypt(char *s) {
-//     for (; *s; s++) {                   // 遍历所有的字符
-//         if (*s >= 'a' && *s <= 'z') {   // 如果是小写字符
-//             if (*s == 'z')              // 如果是 ‘z’，设置为 ‘a’
-//                 *s = 'a';
-//             else                        // 否则，ASCII 码加一
-//                 *s = *s + 1;                
-//         }
-//     }
-//     return ;
-// }

@@ -20,6 +20,9 @@ struct Task {
   static std::priority_queue<Task> globTaskHeap;
   Route route;
   SingleCtr *parent;
+  // bool isPickPlate;
+  std::optional<int> plate_num;
+  std::optional<Dish *> dish;
 
   enum State {
     PreMove,
@@ -31,11 +34,15 @@ struct Task {
     Done
   }curState;
 
-  Task(Location src=Location(), Location dst=Location(), bool operate=false, bool pick=false, bool put=false, bool wait=false, int time=0, int prior=0, DirectionKind putD=Direction::N, DirectionKind pickD=Direction::N, DirectionKind operateD=Direction::N) :
+  // Task() {}
+  Task(Location src=Location(-1, -1), Location dst=Location(), bool operate=false, bool pick=false, bool put=false, bool wait=false, int time=0, int prior=0, DirectionKind putD=Direction::N, DirectionKind pickD=Direction::N, DirectionKind operateD=Direction::N) :
     source(src),
     target(dst),
     route(Location(), src, Direction::N),
     parent(NULL),
+    // isPickPlate(false),
+    plate_num(std::nullopt),
+    dish(std::nullopt),
     needOperation(operate),
     needPick(pick),
     needPut(put),
@@ -49,11 +56,21 @@ struct Task {
     next(NULL),
     curState(PreMove)
   {
-    assert(StaticPath::routeTable[source][target].has_value());
-    assert(!StaticPath::routeTable[source][target].value().empty());
+    if (src != Location(-1, -1)) {
+      assert(StaticPath::routeTable[source][target].has_value());
+      assert(!StaticPath::routeTable[source][target].value().empty());
+    }
+    if (needOperation && needPut) {
+      assert(operateDirection == putDirection);
+    }
+    
     // if (source == target) 
     // else route = StaticPath::routeTable[source][target].value()[0];
   }
+
+  bool usePot();
+  bool usePan();
+  bool isPickDirtyPlate();
 
   bool needOperation, needPick, needPut, needWait;
   DirectionKind putDirection;
