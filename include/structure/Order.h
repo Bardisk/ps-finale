@@ -55,6 +55,9 @@ struct Dish {
   Dish() {}
   Dish(std::string name);
 
+  bool ended;
+  Task *getTask();
+
   //helper functions
   Cooker::CookerKind heatKind() {
     assert(heat.has_value());
@@ -90,7 +93,7 @@ struct AttentionOrder
   enum State {
     GetPlate,
     Prepare,
-    Surve,
+    Serve,
     Done
   } curState;
 
@@ -113,6 +116,7 @@ struct AttentionOrder
   }
 
   std::optional<Task *> getPlate();
+  Task *serveOrder();
 
   ~AttentionOrder();
 };

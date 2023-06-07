@@ -90,11 +90,11 @@ void init_read()
                 if (Map::tileMap[to] == Tile::PlateRack) cleanDestination = location, cleanDirection = direction;
                 if (Map::tileMap[to] == Tile::Sink) washDestination = location, washDirection = direction;
                 if (Map::tileMap[to] == Tile::ChoppingStation) chopDestination = location, chopDirection = direction;
-                if (location == Location(4, 8)) {
-                    Log("IN (4, 8)");
-                    Log("%d\n", (int) Map::tileMap[to]);
-                    Log("%c\n", Tile::encode(Map::tileMap[to]));
-                }
+                // if (location == Location(4, 8)) {
+                //     Log("IN (4, 8)");
+                //     Log("%d\n", (int) Map::tileMap[to]);
+                //     Log("%c\n", Tile::encode(Map::tileMap[to]));
+                // }
                 if (Map::tileMap[to] == Tile::ServiceWindow) surveDestination = location, surveDirection = direction;
             }
         }
@@ -263,10 +263,10 @@ bool frame_read(int nowFrame)
             }
         }
         if (enttyList[i].containerKind == Container::Pan) {
-            
+            Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
         }
         if (enttyList[i].containerKind == Container::Pot) {
-           
+            Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
         }
     }
     return false;
