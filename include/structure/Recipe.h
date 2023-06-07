@@ -18,5 +18,4 @@ struct Recipe
   }
 };
 
-
 #endif

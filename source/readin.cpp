@@ -263,9 +263,13 @@ bool frame_read(int nowFrame)
             }
         }
         if (enttyList[i].containerKind == Container::Pan) {
+            // assert(~enttyList[i].currentFrame);
+            // assert(~enttyList[i].totalFrame);
             Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
         }
         if (enttyList[i].containerKind == Container::Pot) {
+            // assert(~enttyList[i].currentFrame);
+            // assert(~enttyList[i].totalFrame);
             Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
         }
     }

@@ -7,7 +7,7 @@ int Task::timingCnt = 0;
 
 using Cooker::CookerKind;
 
-std::priority_queue<Task> Task::globTaskHeap;\
+std::priority_queue<Task> Task::globTaskHeap;
 std::unordered_set<Task *> taskSet;
 
 using Mainctr::Operation;
@@ -575,6 +575,7 @@ Task *AttentionOrder::serveOrder() {
   );
   taskSet.insert(servePlate);
   curState = Done;
+  return servePlate;
 }
 
 //return a task to getPlate

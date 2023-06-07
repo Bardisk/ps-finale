@@ -26,6 +26,8 @@ struct Route
     default:
       break;
     }
+    assert(0);
+    return false;
   }
   bool compare(const Location &a, const Location &b) const {
     assert(Direction::encode(direction).size() < 2);
@@ -49,6 +51,8 @@ struct Route
     default:
       break;
     }
+    assert(0);
+    return false;
   }
   std::optional<Location> intersect(const Route &b) const {
     //only straight route permitted
