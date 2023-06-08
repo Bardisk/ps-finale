@@ -12,6 +12,7 @@ namespace Game{
     int randomizeSeed;
     int remainFrame, fund;
     int currentFrame;
+    int chopAvail;
     Ingredient ingrdList[INGRD_NR_MAX];
     Recipe recipList[RECIP_NR_MAX];
     Ordertemplate totodList[TOTOD_NR_MAX];
@@ -46,6 +47,7 @@ namespace Game{
     bool attentionInitialized = false;
     int poolDirtyCnt = 0, serveDirtyCnt = 0;
     int panTime, potTime;
+    int panOver, potOver;
     int attentionMaxCnt;
 }
 
@@ -243,7 +245,7 @@ bool frame_read(int nowFrame)
     if (!attentionInitialized) {
         attentionInitialized = true;
         for (int i = 0; i < attentionMaxCnt; i++) {
-            attentionOrderList[i] = orderList[i];
+            attentionOrderList[i] = AttentionOrder(orderList[i], attentionOrderList + i);
         }
     }
 
@@ -264,6 +266,7 @@ bool frame_read(int nowFrame)
     poolDirtyCnt = 0;
     ss >> enttyCnt;
     Game::panTime = Game::potTime = 0;
+    Game::chopAvail = 1;
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
@@ -279,13 +282,19 @@ bool frame_read(int nowFrame)
             // assert(~enttyList[i].totalFrame);
             // Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
             Game::panTime = ~enttyList[i].currentFrame ? 0 : 1;
+            Game::panOver = enttyList[i].currentFrame - enttyList[i].totalFrame;
         }
         if (enttyList[i].containerKind == Container::Pot) {
             // assert(~enttyList[i].currentFrame);
             // assert(~enttyList[i].totalFrame);
             // Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
             Game::potTime = ~enttyList[i].currentFrame ? 0 : 1;
+            Game::potOver = enttyList[i].currentFrame - enttyList[i].totalFrame;
+        }
+        if (enttyList[i].location == Game::chopDestination[chopDirection]) {
+            Game::chopAvail = 0;
         }
     }
+    Log("panTime %d potTime %d", Game::panOver, Game::potOver);
     return false;
 }

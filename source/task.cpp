@@ -12,6 +12,10 @@ std::unordered_set<Task *> taskSet;
 
 using Mainctr::Operation;
 
+namespace GameCtr{
+  std::pair<std::optional<Location>, DirectionKind> aLocationToStay(Location x, Location y);
+}
+
 Task::State Task::nextState(Task::State now) {
   switch (now)
   {
@@ -81,8 +85,14 @@ Task::State Task::nextState(Task::State now) {
 
 std::optional<Operation> Task::getDesicion() {
   // if ()
-  Location selfLocation = parent->me->position;
+  Log("ENTERING TASK FROM (%d, %d) to (%d, %d)", source.x, source.y, target.x, target.y);
+  Log("ROUTE from (%d, %d) to (%d, %d) %s of player %d", route.src.x, route.src.y, route.dst.x, route.dst.y, Direction::encode(route.direction).c_str(), parent->num);
+  assert(parent);
+  assert(parent->me);
+  Location selfLocation = Location(parent->me->position, parent->me->velocity, operation.command == Command::Move ? operation.direction : Direction::N);
+  Log("now at (%d %d)", selfLocation.x, selfLocation.y);
   restart:
+  Log("NOW state %s", encode(curState).c_str());
   switch (curState)
   {
   //Prepare
@@ -104,21 +114,42 @@ std::optional<Operation> Task::getDesicion() {
     if (operation.command != Command::Move)
       operation = Operation(Command::Move, Direction::N);
     //on arrival
-    if (parent->routeLocked || route.dst == (Location) parent->me->position) {
+    if (parent->routeLocked || route.dst == selfLocation) {
       //route is end
       if (parent->me->velocity.abs() < eps){
         if (route.dst == target) {
           //next state
           curState = nextState(Move);
         } else {
+          if (route.timeout) {
+            int tmp = --route.timeout;
+            route = Route(
+              Location(-1, -1),
+              selfLocation,
+              Direction::N
+            );
+            route.timeout = tmp;
+            Log("route Wait");
+            return Operation(Command::Move, Direction::N);
+          }
           //find next Route
+          Log("BEGIN NEXT ROUTE");
           assert(StaticPath::routeTable[route.dst][target].has_value());
           assert(!StaticPath::routeTable[route.dst][target].value().empty());
           route = StaticPath::routeTable[route.dst][target].value()[0];
-          if (parent->mate->task->curState == Task::Move) {
+          Log("FIND ONE ROUTE from (%d, %d) to (%d, %d) %s of player %d", route.src.x, route.src.y, route.dst.x, route.dst.y, Direction::encode(route.direction).c_str(), parent->num);
+          assert(parent->mate);
+          // assert(parent->mate->task);
+          if (parent->mate->task && parent->mate->task->curState == Task::Move && parent->mate->task->route.src.isvalid()) {
             if (parent->mate->routeLocked) {
-              if (route.isin((Location) parent->mate->me->position)) {
+              Log("MATE LOCKED");
+              if (route.isin(Location(parent->mate->me->position, Velocity(), Direction::N))) {
                 parent->routeLocked = true; //mutual dead clock;
+                route = Route(
+                  Location(-1, -1),
+                  selfLocation,
+                  Direction::N
+                );
                 assert(0);
                 return Operation(Command::Move, Direction::N);
               }
@@ -128,7 +159,18 @@ std::optional<Operation> Task::getDesicion() {
               if (intersetRes.has_value()) {
                 if (intersetRes.value() == route.src) {
                   parent->routeLocked = true;
+                  route = Route(
+                    Location(-1, -1),
+                    selfLocation,
+                    Direction::N
+                  );
                   return Operation(Command::Move, Direction::N);
+                } else {
+                  route = Route(
+                    route.src,
+                    intersetRes.value(),
+                    route.direction
+                  );
                 }
                 
               }
@@ -173,23 +215,24 @@ std::optional<Operation> Task::getDesicion() {
               } else {
                 route = Route(
                   route.src,
-                  intersetRes.value(),
+                  mateLocation[Direction::getrev(route.direction)],
                   route.direction
                 );
               }
             }
-          } else {
-            if (route.isin((Location) parent->mate->me->position)) {
-              parent->routeLocked = true;
-              return Operation(Command::Move, Direction::N);
-            }
           }
+          Log("TRANSIT SUCC");
           parent->routeLocked = false;
         }
         goto restart;
       }
       //try to stop
-      else operation = Operation(Command::Move, Direction::N);
+      else {
+        if (selfLocation != route.src) {
+          route.src = selfLocation[Direction::getrev(route.direction)];
+        }
+        operation = Operation(Command::Move, Direction::N);
+      }
     }
     //go on
     else operation = Operation(Command::Move, route.direction);
@@ -374,7 +417,32 @@ namespace StaticPath{
 }
 
 namespace GameCtr {
+  using Direction::DirectionKind;
   SingleCtr player1, player2;
+  std::pair<std::optional<Location>, DirectionKind> aLocationToStay(Location x, Location y) {
+    int maxDist = 0;
+    DirectionKind targetDirection;
+    Location target = x;
+    for (int i = 0; i < Direction::N; i++) {
+      auto direction = (DirectionKind) i;
+      if (Direction::encode(direction).size() > 1)
+        continue;
+      int dist = 0;
+      Location tmp = x;
+      while(Path::abilityMap[tmp[direction]] && tmp[direction] != y)
+        tmp = tmp[direction], dist++;
+      if (dist > maxDist) {
+        maxDist = dist;
+        target = tmp;
+        targetDirection = direction;
+      }
+    }
+    // return maxDist == 0 ? std::nullopt : target;
+    if (maxDist == 0)
+      return std::make_pair(std::optional<Location>(std::nullopt), Direction::N);
+    else
+      return std::make_pair(std::optional<Location>(target), targetDirection);
+  }
   void init() {
     player1 = (SingleCtr) {
       .num = 1,
@@ -394,6 +462,7 @@ namespace GameCtr {
     };
   }
   std::string respond() {
+    Log("RESPDDDD");
     std::stringstream ss;
     ss << player1.getDecistion() << player2.getDecistion();
     if (player1.taskLocked || player2.taskLocked) {
@@ -425,18 +494,22 @@ namespace GameCtr {
 }
 
 std::string SingleCtr::getDecistion() {
-  assert(task->parent == this);
+  Log("PLAYER %d 's Decision", num);
+  assert(!task || task->parent == this);
 
   //No task, find one
   if (!task) {
+    // Log("?>??");
     task = newTask();
   }
+  Log("CHECK TASK END");
   //being locked
   if (!task) {
     taskLocked = true;
     Log("taskLocked %d", num);
     return Operation(Command::Move, Direction::N).encode();
   }
+  Log("SECOND CHK");
   taskLocked = false;
   auto taskRes = task->getDesicion();
   //task has ended
@@ -445,7 +518,7 @@ std::string SingleCtr::getDecistion() {
     //release Task Lock
     if (!task->isReturn()) {
       Map::lockMap[task->target] = false;
-      Log("openmap (%d %d) by", task->target.x, task->target.y, num);
+      Log("openmap (%d %d) by %d", task->target.x, task->target.y, num);
     }
     //no following task
     if (!task->next) {
@@ -454,7 +527,7 @@ std::string SingleCtr::getDecistion() {
         task->dish.value()->ended = true;
       }
       if (task->attod.has_value()) {
-        assert(task->isSettlePlate());
+        assert(task->isSettlePlate() || task->isSurve());
         switch(task->attod.value()->curState) {
           case AttentionOrder::GetPlate: {
             assert(task->attod.value()->getPlateReleased);
@@ -464,9 +537,12 @@ std::string SingleCtr::getDecistion() {
           case AttentionOrder::Serve: {
             assert(task->attod.value()->serveReleased);
             task->attod.value()->curState = AttentionOrder::Done;
-            *(task->attod.value()) = AttentionOrder(Game::orderList[Game::attentionMaxCnt - 1]);
+            Game::absentPlates.insert(task->attod.value()->targetPlate);
+            Log("RETURNING PLATE %d", task->attod.value()->targetPlate);
+            *(task->attod.value()) = AttentionOrder(Game::orderList[Game::attentionMaxCnt - 1], task->attod.value());
             break;
           }
+          break;
           default:
             Log("NOT VALID ATTOD STATUS %d", (int) task->attod.value()->curState);
             assert(0);
@@ -484,6 +560,7 @@ std::string SingleCtr::getDecistion() {
     } else {
       Task *nextTask = task->next;
       if (task->usePan() || task->usePot()) {
+        Log("QUIT PAN AND POT");
         taskSet.insert(nextTask);
         delete task;
         task = newTask();
@@ -496,16 +573,19 @@ std::string SingleCtr::getDecistion() {
       }
       else {
         //bug
-        if (nextTask->source == task->target && (nextTask->isReturn() || !Map::lockMap[nextTask->target])) {
+        if (nextTask->source == task->target && (nextTask->isReturn() || !Map::lockMap[nextTask->target]) && !((nextTask->usePan() && !Game::panTime) || (nextTask->usePot() && !Game::potTime))) {
           delete task;
           task = nextTask;
           assert(nextTask->target.isvalid());
           if (!task->isReturn()) {
             Map::lockMap[task->target] = true;
-            Log("lockmap (%d %d) by %d", task->target.x, task->target.y, num);
+            Log("transit lockmap (%d %d) by %d", task->target.x, task->target.y, num);
           }
           assert(!taskLocked);
+          assert(task);
+          task->parent = this;
           taskRes = task->getDesicion();
+          Log("Peaceful transit");
         }
         else {
           taskSet.insert(nextTask);
@@ -529,25 +609,33 @@ Task *SingleCtr::newTask() {
   int k = 2;
   //repeat twice
   while (k--) {
+    Log("FRESHING NEW TASK");
     for (int i = 0; i < Game::attentionMaxCnt; i++) {
       switch (Game::attentionOrderList[i].curState)
       {
       case AttentionOrder::Done:
         assert(0);
       case AttentionOrder::Serve:
+        assert(Game::attentionOrderList[i].targetPlate >= 0);
         if (!Game::attentionOrderList[i].serveReleased) {
           Game::attentionOrderList[i].serveOrder();
         }
         break;
       case AttentionOrder::GetPlate:
+        Log("TRIGGER GETPLATE");
         if (!Game::attentionOrderList[i].getPlateReleased) {
+          Log("EFFECTIVE GETPLATE");
           Game::attentionOrderList[i].getPlate();
         }
         break;
       case AttentionOrder::Prepare: {
+        assert(Game::attentionOrderList[i].targetPlate >= 0);
+        Log("TRIGGER PREPARE among %d dishes", Game::attentionOrderList[i].requirement.size());
         bool flag = false;
-        for (auto dish : Game::attentionOrderList[i].requirement) {
+        for (auto &dish : Game::attentionOrderList[i].requirement) {
           if (!dish.released) {
+            Log("TRY PREPARE DISH");
+            assert(dish.parent == &Game::attentionOrderList[i]);
             dish.getTask();
           }
           if (!dish.ended)
@@ -562,38 +650,44 @@ Task *SingleCtr::newTask() {
     }
   }
   
+  Log("PICKING NEW TASK among %d tasks", taskSet.size());
 
   int minDist = 0x3f3f3f3f;
   Task *minTask = NULL;
   for (auto avTask : taskSet) {
     assert(avTask != NULL);
-    if (avTask->usePan() && !Game::panTime) continue;
-    if (avTask->usePot() && !Game::potTime) continue;
+    if (avTask->usePan() && !Game::panTime) {Log("SKIPPING TASK %d", __LINE__); continue;}
+    if (avTask->usePot() && !Game::potTime) {Log("SKIPPING TASK %d", __LINE__); continue;}
     
+    if ((avTask->source == Game::panDestination && avTask->pickDirection == Game::panDirection) && !Game::panTime && Game::panOver < 0) {Log("SKIPPING TASK %d", __LINE__); continue;}
+    if ((avTask->source == Game::potDestination && avTask->pickDirection == Game::potDirection) && !Game::potTime && Game::potOver < 0) {Log("SKIPPING TASK %d", __LINE__); continue;}
+
+    if (avTask->useChop() && !Game::chopAvail) {Log("SKIPPING TASK %d", __LINE__); continue;}
+
     if (avTask->isPickDirtyPlate() && !(Game::poolDirtyCnt == 0 && Game::serveDirtyCnt > 0)) {
-      if (Game::inWayPlateCnt.has_value()) continue;
+      if (Game::inWayPlateCnt.has_value()) {Log("SKIPPING TASK %d", __LINE__); continue;}
       if (Game::poolDirtyCnt > 0) {
-        if (Map::lockMap[avTask->target]) continue;
+        if (Map::lockMap[avTask->target]) {Log("SKIPPING TASK %d", __LINE__); continue;}
         if (minDist > 0) {
           minDist = 0;
           minTask = avTask;
         }
       } else if (Game::serveDirtyCnt == 0) {
-        continue;
+        {Log("SKIPPING TASK %d", __LINE__); continue;}
       } else {
         assert(0);
-        if (Map::lockMap[avTask->source]) continue;
-        if (avTask->source == (Location) me->position && Map::lockMap[avTask->target]) continue;
-        if (StaticPath::disTable[(Location) me->position][avTask->source] < minDist) {
-          minDist = StaticPath::disTable[(Location) me->position][avTask->source];
+        if (Map::lockMap[avTask->source]) {Log("SKIPPING TASK %d", __LINE__); continue;}
+        if (avTask->source == Location(me->position, Velocity(), Direction::N) && Map::lockMap[avTask->target]) {Log("SKIPPING TASK %d", __LINE__); continue;}
+        if (StaticPath::disTable[Location(me->position, Velocity(), Direction::N)][avTask->source] < minDist) {
+          minDist = StaticPath::disTable[Location(me->position, Velocity(), Direction::N)][avTask->source];
           minTask = avTask;
         }
       }
     } else {
-      if (Map::lockMap[avTask->source]) continue;
-      if (avTask->source == (Location) me->position && Map::lockMap[avTask->target]) continue;
-      if (StaticPath::disTable[(Location) me->position][avTask->source] < minDist) {
-        minDist = StaticPath::disTable[(Location) me->position][avTask->source];
+      if (Map::lockMap[avTask->source]) {Log("SKIPPING TASK %d", __LINE__); continue;}
+      if (avTask->source == Location(me->position, Velocity(), Direction::N) && Map::lockMap[avTask->target]) {Log("SKIPPING TASK %d", __LINE__); continue;}
+      if (StaticPath::disTable[Location(me->position, Velocity(), Direction::N)][avTask->source] < minDist) {
+        minDist = StaticPath::disTable[Location(me->position, Velocity(), Direction::N)][avTask->source];
         minTask = avTask;
       }
     }
@@ -601,13 +695,14 @@ Task *SingleCtr::newTask() {
 
   //pick this task
   if (minTask) {
+    Log("FOUNDTASK");
     //fetch this task
     taskSet.erase(minTask);
     if (minTask->isPickDirtyPlate() && !(Game::poolDirtyCnt == 0 && Game::serveDirtyCnt > 0)) {
       if (Game::poolDirtyCnt > 0) {
         assert(minTask->target == Game::washDestination);
         Task *washPlate = new Task(
-          (Location) me->position,               //src
+          Location(me->position, Velocity(), Direction::N),               //src
           Game::washDestination,        //dst
           true,                        //operate
           false,                         //pick
@@ -631,7 +726,7 @@ Task *SingleCtr::newTask() {
       } else assert(0);
     }
     assert(!Map::lockMap[minTask->source]);
-    if (minTask->source == (Location) me->position) { //no need to move to source
+    if (minTask->source == Location(me->position, Velocity(), Direction::N)) { //no need to move to source
       assert(!Map::lockMap[minTask->target]);
       minTask->parent = this;
       Map::lockMap[minTask->target] = true;
@@ -639,7 +734,7 @@ Task *SingleCtr::newTask() {
       return minTask;
     } else { //need to move to source
       //just move
-      Task *move = new Task((Location) me->position, minTask->source);
+      Task *move = new Task(Location(me->position, Velocity(), Direction::N), minTask->source);
       Map::lockMap[move->target] = true;
       Log("lockmap (%d %d) by %d", move->target.x, move->target.y, num);
       //follow by real task
@@ -652,8 +747,10 @@ Task *SingleCtr::newTask() {
   return minTask;
 }
 
-Dish::Dish(std::string name) {
-  ended = false;
+
+Dish::Dish(std::string name, AttentionOrder *_parent) {
+  ended = released = false;
+  parent = _parent;
   Log("Prepare %s", name.c_str());
   if (Game::ingrdPlace.find(name) == Game::ingrdPlace.end()) {
     assert(Game::madeFrom.find(name) != Game::madeFrom.end());
@@ -706,6 +803,10 @@ bool Task::usePot() {
   return needOperation && needPut && !needWait && target == Game::potDestination && putDirection == Game::potDirection;
 }
 
+bool Task::useChop() {
+  return needOperation && needPut && needWait && target == Game::chopDestination && putDirection == Game::chopDirection;
+}
+
 bool Task::isPickDirtyPlate() {
   return needOperation && needPick && needWait && needPut && source == Game::dirtyDestination && target == Game::washDestination && putDirection == Game::washDirection && pickDirection == Game::dirtyDirection;
 }
@@ -718,9 +819,14 @@ bool Task::isSettlePlate() {
   return !needOperation && needPick && !needWait && needPut && source == Game::cleanDestination && pickDirection == Game::cleanDirection;
 }
 
+bool Task::isSurve() {
+  return !needOperation && needPick && !needWait && needPut && target == Game::surveDestination && putDirection == Game::surveDirection;
+}
+
 //Hardcoder will never lose
 Task *Dish::getTask() {
   assert(!released);
+  assert(parent);
   released = true;
   if (chop.has_value()) {
     Task *getIngrdToChop = new Task(
@@ -740,7 +846,7 @@ Task *Dish::getTask() {
     if (heat.has_value()) {
       Task *getChopToHeat = new Task (
         Game::chopDestination,               //src
-        Game::chopDestination,        //dst
+        heatDestination(),        //dst
         true,                        //operate
         true,                         //pick
         true,                          //put
@@ -870,6 +976,8 @@ Task *AttentionOrder::serveOrder() {
   assert(!serveReleased);
   serveReleased = true;
   assert(curState == Serve);
+  // Log("Serving Order (%d) targetPlate %d", (int) (this - Game::attentionOrderList), targetPlate);
+  assert(targetPlate >= 0);
   Task *servePlate = new Task(
     Game::plateDestinationList[targetPlate],               //src
     Game::surveDestination,        //dst
@@ -885,7 +993,7 @@ Task *AttentionOrder::serveOrder() {
   );
   servePlate->attod = this;
   taskSet.insert(servePlate);
-  curState = Done;
+  // curState = Done;
   return servePlate;
 }
 
@@ -897,19 +1005,23 @@ std::optional<Task *> AttentionOrder::getPlate() {
   assert(curState == GetPlate);
   assert(targetPlate == -1);
   //already have a plate (COLD START)
+  
   if (Game::readyPlateCnt > 0) {
     assert(Game::readyPlateCnt == Game::readyPlates.size());
     Game::readyPlateCnt--;
-    // targetPlate = Game::readyPlates.begin();
-    // Game::absentPlates.insert(*Game::readyPlates.begin());
-    Game::readyPlates.erase(Game::readyPlates.begin());
+    targetPlate = *Game::readyPlates.begin();
+    // Game::absentPlates.insert(targetPlate);
+    Game::readyPlates.erase(targetPlate);
     curState = Prepare;
+    Log("Ready (%d) targetPlate %d", (int) (this - Game::attentionOrderList), targetPlate);
     return std::nullopt;
   }
   else {
+    Log("NEW PUTPLATE");
     assert(Game::absentPlates.size() > 0);
     targetPlate = *Game::absentPlates.begin();
-    Game::absentPlates.erase(Game::absentPlates.begin());
+    Log("TRY Order (%d) targetPlate %d", (int) (this - Game::attentionOrderList), targetPlate);
+    Game::absentPlates.erase(targetPlate);
     // curState = Prepare;
     // leave the branch to run-time
     // if (pool)

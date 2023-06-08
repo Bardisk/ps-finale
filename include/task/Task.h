@@ -35,11 +35,34 @@ struct Task {
     Done
   }curState;
 
+  std::string encode(State state) {
+    switch (state)
+    {
+    case PreMove:
+      return "PREMOVE";
+    case Pick:
+      return "PICK";
+    case Move:
+      return "MOVE";
+    case Put:
+      return "PUT";
+    case Operate:
+      return "OPERATE";
+    case Wait:
+      return "WAIT";
+    case Done:
+      return "DONE";
+    default:
+      break;
+    }
+    assert(0);
+  }
+
   // Task() {}
   Task(Location src=Location(-1, -1), Location dst=Location(), bool operate=false, bool pick=false, bool put=false, bool wait=false, int time=0, int prior=0, DirectionKind putD=Direction::N, DirectionKind pickD=Direction::N, DirectionKind operateD=Direction::N) :
     source(src),
     target(dst),
-    route(Location(), src, Direction::N),
+    route(Location(-1, -1), src, Direction::N),
     parent(NULL),
     // isPickPlate(false),
     plate_num(std::nullopt),
@@ -58,7 +81,10 @@ struct Task {
     next(NULL),
     curState(PreMove)
   {
-    if (src != Location(-1, -1)) {
+    if (src != Location(-1, -1) && source != target) {
+      if (!StaticPath::routeTable[source][target].has_value()) {
+        Log("WARN: NO ROUTE FROM (%d, %d) to (%d, %d)", source.x, source.y, target.x, target.y);
+      }
       assert(StaticPath::routeTable[source][target].has_value());
       assert(!StaticPath::routeTable[source][target].value().empty());
     }
@@ -73,8 +99,10 @@ struct Task {
   //helper functions
   bool usePot();
   bool usePan();
+  bool useChop();
   bool isPickDirtyPlate();
   bool isSettlePlate();
+  bool isSurve();
   bool isReturn();
 
   bool needOperation, needPick, needPut, needWait;

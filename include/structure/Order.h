@@ -53,7 +53,7 @@ struct Dish {
   DirectionKind boxDirection;
   AttentionOrder *parent;
   Dish() {}
-  Dish(std::string name);
+  Dish(std::string name, AttentionOrder *_parent=NULL);
 
   bool ended;
   bool released;
@@ -102,13 +102,15 @@ struct AttentionOrder
 
   AttentionOrder() {}
 
-  AttentionOrder(const Order &order) :
+  AttentionOrder(const Order &order, AttentionOrder *self) :
     completeCnt(0),
     targetPlate(-1),
-    curState(GetPlate)
+    curState(GetPlate),
+    serveReleased(false),
+    getPlateReleased(false)
   {
     for (auto target : order.requirement) {
-      requirement.push_back(Dish(target));
+      requirement.push_back(Dish(target, self));
       completed.push_back(0);  
     }
   }

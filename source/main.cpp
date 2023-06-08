@@ -1,5 +1,5 @@
 #include <basics.h>
-#define OLD
+// #define OLD
 
 int main()
 {
@@ -20,7 +20,9 @@ int main()
         bool skip = frame_read(i);
         if (skip) continue;
 
+#ifdef OLD
         Mainctr::getDecision();
+#endif
         /* 输出当前帧的操作，此处仅作示例 */
         std::cout << "Frame " << i << "\n";
 

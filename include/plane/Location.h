@@ -10,7 +10,7 @@ namespace StaticPath {
 struct Location {
   int x, y;
   Location(int _x=0, int _y=0) : x(_x), y(_y) {}
-  Location(Position _p, Velocity velocity=Velocity(), Direction::DirectionKind towards=Direction::N)
+  Location(Position _p, Velocity velocity, Direction::DirectionKind towards)
     : x(std::round(_p.x - 0.5 - (0.5 - 0.44 * (velocity.abs())  / (MAX_VELOCITY)) * Direction::dx[towards])+eps)
     , y(std::round(_p.y - 0.5 - (0.5 - 0.44 * (velocity.abs())  / ( MAX_VELOCITY)) * Direction::dy[towards])+eps)
   {}

@@ -9,8 +9,9 @@ struct Route
 {
   Location src, dst;
   DirectionKind direction;
+  int timeout;
   Route(Location _src, Location _dst, DirectionKind _d)
-    : src(_src), dst(_dst), direction(_d) {}
+    : src(_src), dst(_dst), direction(_d), timeout(0) {}
   bool isin(const Location &location) const {
     assert(Direction::encode(direction).size() < 2);
     switch (direction)
@@ -26,6 +27,7 @@ struct Route
     default:
       break;
     }
+    Log("INVALID ROUTE OF (%d, %d) to (%d, %d)", src.x, src.y, dst.x, dst.y);
     assert(0);
     return false;
   }
@@ -55,6 +57,12 @@ struct Route
     return false;
   }
   std::optional<Location> intersect(const Route &b) const {
+    assert(dst.isvalid());
+    assert(b.dst.isvalid());
+    assert(src.isvalid());
+    assert(b.src.isvalid());
+    assert(direction != Direction::N);
+    assert(b.direction != Direction::N);
     //only straight route permitted
     assert(Direction::encode(direction).size() < 2);
     //b cannot contain a's source
@@ -82,9 +90,10 @@ struct Route
       intersection = Location(src.x, b.src.y);
     else intersection = Location(b.src.x, src.y);
 
-    assert(intersection != src);
-    if (isin(intersection) && b.isin(intersection))
+    if (isin(intersection) && b.isin(intersection)) {
+      assert(intersection != src);
       return intersection[Direction::getrev(direction)];
+    }
     else return std::nullopt;
   }
   

@@ -43,6 +43,8 @@ namespace Game{
   extern int attentionMaxCnt;
   extern int poolDirtyCnt, serveDirtyCnt;
   extern int panTime, potTime;
+  extern int panOver, potOver;
+  extern int chopAvail;
 }
 
 #endif
