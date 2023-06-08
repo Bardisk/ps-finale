@@ -56,6 +56,7 @@ struct Dish {
   Dish(std::string name);
 
   bool ended;
+  bool released;
   Task *getTask();
 
   //helper functions
@@ -85,6 +86,8 @@ struct AttentionOrder
   std::vector<Dish> requirement;
   std::vector<bool> completed;
   int completeCnt;
+  bool getPlateReleased;
+  bool serveReleased;
 
   // Location targetPlateDestination;
   // DirectionKind targetPlateDirection;

@@ -13,6 +13,7 @@ int main()
     Log("Begin INIT");
 
     init_read();
+    GameCtr::init();
 
     int totalFrame = 14400;
     for (int i = 0; i < totalFrame; i++) {

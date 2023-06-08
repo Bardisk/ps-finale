@@ -38,8 +38,11 @@ namespace Game{
   extern int readyPlateCnt;
   extern int dirtyPlateCnt;
   extern int cleanPlateCnt;
+  extern std::optional<int> inWayPlateCnt;
 
   extern int attentionMaxCnt;
+  extern int poolDirtyCnt, serveDirtyCnt;
+  extern int panTime, potTime;
 }
 
 #endif
