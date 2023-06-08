@@ -130,6 +130,47 @@ std::optional<Operation> Task::getDesicion() {
                   parent->routeLocked = true;
                   return Operation(Command::Move, Direction::N);
                 }
+                
+              }
+            }
+          } else {
+            Log("MATE NOT MOVE");
+            // Location myLocation = 
+            if (route.isin(Location(parent->mate->me->position, Velocity(), Direction::N))) {
+              Location mateLocation = Location(parent->mate->me->position, Velocity(), Direction::N);
+              if (mateLocation[Direction::getrev(route.direction)] == route.src) {
+                Path::abilityMap[mateLocation] = false;
+                auto direction = Path::getDirectionBFS(selfLocation, target);
+                Path::abilityMap[mateLocation] = true;
+                if (direction == Direction::N) {
+                  auto stay = GameCtr::aLocationToStay(selfLocation, mateLocation);
+                  if (!stay.first.has_value()) {
+                    parent->routeLocked = true;
+                    route = Route(
+                      Location(-1, -1),
+                      selfLocation,
+                      Direction::N
+                    );
+                    return Operation(Command::Move, Direction::N);
+                  }
+                  else {
+                    assert(stay.second != Direction::N);
+                    route = Route(
+                      route.src,
+                      stay.first.value(),
+                      stay.second
+                    );
+                    route.timeout = 1;
+                  }
+                } else {
+                  route = Route(
+                    route.src,
+                    route.src[direction],
+                    direction
+                  );
+                  route.timeout = 1;
+                }
+              } else {
                 route = Route(
                   route.src,
                   intersetRes.value(),
@@ -355,6 +396,30 @@ namespace GameCtr {
   std::string respond() {
     std::stringstream ss;
     ss << player1.getDecistion() << player2.getDecistion();
+    if (player1.taskLocked || player2.taskLocked) {
+      // Log("DEAD LOCK");
+      // assert(0);
+      if (player1.routeLocked && player2.routeLocked) {
+        Log("mutual route lock");
+        assert(0);
+      }
+      Location loc1 = Location(player1.me->position, Velocity(), Direction::N);
+      Location loc2 = Location(player2.me->position, Velocity(), Direction::N);
+      auto stay1 = aLocationToStay(loc1, loc2);
+      auto stay2 = aLocationToStay(loc2, loc1);
+      if (player1.taskLocked && stay1.first.has_value()) {
+        player1.taskLocked = false;
+        player1.task = new Task(loc1,stay1.first.value(),false,false,false,true,1);
+        player1.task->parent = &player1;
+      } else if (player2.taskLocked && stay2.first.has_value()) {
+        player2.taskLocked = false;
+        player2.task = new Task(loc2,stay2.first.value(),false,false,false,true,1);
+        player2.task->parent = &player2;
+      } else {
+        // Log("mutual route lock, abandon");
+        // assert(0);
+      }
+    }
     return ss.str();
   }
 }
