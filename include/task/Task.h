@@ -23,6 +23,7 @@ struct Task {
   // bool isPickPlate;
   std::optional<int> plate_num;
   std::optional<Dish *> dish;
+  std::optional<AttentionOrder *> attod;
 
   enum State {
     PreMove,
@@ -43,6 +44,7 @@ struct Task {
     // isPickPlate(false),
     plate_num(std::nullopt),
     dish(std::nullopt),
+    attod(std::nullopt),
     needOperation(operate),
     needPick(pick),
     needPut(put),
@@ -68,9 +70,12 @@ struct Task {
     // else route = StaticPath::routeTable[source][target].value()[0];
   }
 
+  //helper functions
   bool usePot();
   bool usePan();
   bool isPickDirtyPlate();
+  bool isSettlePlate();
+  bool isReturn();
 
   bool needOperation, needPick, needPut, needWait;
   DirectionKind putDirection;

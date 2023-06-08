@@ -31,6 +31,7 @@ namespace Game{
     int readyPlateCnt;
     int dirtyPlateCnt;
     int cleanPlateCnt;
+    std::optional<int> inWayPlateCnt;
 
     Location chopDestination, potDestination, panDestination;
     Direction::DirectionKind chopDirection, potDirection, panDirection;
@@ -240,18 +241,29 @@ bool frame_read(int nowFrame)
     
     //Cold Start
     if (!attentionInitialized) {
+        attentionInitialized = true;
         for (int i = 0; i < attentionMaxCnt; i++) {
             attentionOrderList[i] = orderList[i];
         }
     }
 
     ss >> playrCnt;
+    inWayPlateCnt = std::nullopt;
     for (int i = 0; i < playrCnt; i++) {
         ss >> playrList[i];
         Log("player (%.2lf %.2lf)", playrList[i].position.x, playrList[i].position.y);
+        if (playrList[i].entity.has_value()) {
+            if(playrList[i].entity.value().containerKind == Container::DirtyPlates) {
+                assert(!inWayPlateCnt.has_value());
+                inWayPlateCnt = playrList[i].entity.value().sum;
+            }
+        }
     }
 
+    serveDirtyCnt = 0;
+    poolDirtyCnt = 0;
     ss >> enttyCnt;
+    Game::panTime = Game::potTime = 0;
     for (int i = 0; i < enttyCnt; i++) {
         ss >> enttyList[i].location;
         ss >> enttyList[i];
@@ -265,12 +277,14 @@ bool frame_read(int nowFrame)
         if (enttyList[i].containerKind == Container::Pan) {
             // assert(~enttyList[i].currentFrame);
             // assert(~enttyList[i].totalFrame);
-            Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+            // Game::panTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+            Game::panTime = ~enttyList[i].currentFrame ? 0 : 1;
         }
         if (enttyList[i].containerKind == Container::Pot) {
             // assert(~enttyList[i].currentFrame);
             // assert(~enttyList[i].totalFrame);
-            Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+            // Game::potTime = enttyList[i].currentFrame - enttyList[i].totalFrame;
+            Game::potTime = ~enttyList[i].currentFrame ? 0 : 1;
         }
     }
     return false;
